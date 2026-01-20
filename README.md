@@ -1,8 +1,8 @@
-# 🌊 KPBU SPAM Survey - Risk Allocation System
+#  KPBU SPAM Survey - Risk Allocation System
 
 Aplikasi web survey untuk mengumpulkan dan menganalisis persepsi risiko pada proyek KPBU SPAM (Kerjasama Pemerintah dengan Badan Usaha - Sistem Penyediaan Air Minum).
 
-## ✨ Fitur Utama
+##  Fitur Utama
 
 - **Survey Multi-step** - 9 halaman survey terstruktur dengan auto-save
 - **FAHP Analysis** - Fuzzy Analytic Hierarchy Process untuk bobot risiko
@@ -12,7 +12,7 @@ Aplikasi web survey untuk mengumpulkan dan menganalisis persepsi risiko pada pro
 - **Admin Dashboard** - Monitoring semua response survey
 - **Export Data** - JSON & CSV export
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Framework**: Next.js 14 (App Router)
 - **Database**: PostgreSQL
@@ -20,13 +20,13 @@ Aplikasi web survey untuk mengumpulkan dan menganalisis persepsi risiko pada pro
 - **Auth**: NextAuth.js
 - **Language**: TypeScript
 
-## 📋 Prerequisites
+##  Prerequisites
 
 - Node.js 18+
 - PostgreSQL 14+
 - npm atau yarn
 
-## 🚀 Setup & Installation
+##  Setup & Installation
 
 ### 1. Clone Repository
 
@@ -71,14 +71,14 @@ npm run dev
 
 Buka http://localhost:3000
 
-## 👤 Default Admin
+## Default Admin
 
 - **Username**: `admin`
 - **Password**: `admin123`
 
-> ⚠️ Ganti password default untuk production!
+>  Ganti password default untuk production!
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 ├── prisma/
@@ -100,7 +100,7 @@ Buka http://localhost:3000
 └── package.json
 ```
 
-## 🔐 Security Notes
+##  Security Notes
 
 - `.env` file TIDAK boleh di-commit (sudah ada di .gitignore)
 - Ganti `NEXTAUTH_SECRET` dengan random string yang kuat
@@ -119,7 +119,7 @@ Buka http://localhost:3000
 8. **Review** - Validasi & submit
 9. **Results** - Visualisasi & rekomendasi alokasi
 
-## 📄 License
+##  License
 
 MIT License
 
