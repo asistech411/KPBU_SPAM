@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Survey {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Respondent info (diisi di akhir survey)
+  respondentName  String?
+  respondentEmail String?
+
+  // Screening & Meta
+  screening01 String?  // Ya/Tidak for KPBU involvement
+  consent    Boolean  @default(false)
+  role       String?
+  experience String?
+  phases     String[]
+  dualRole   Boolean  @default(false)
+
+  // Project Reference
+  projectType     String?
+  projectLocation String?
+  projectPayment  String?
+  projectStatus   String?
+  projectPhase    String?
+
+  // Survey Data (JSON)
+  fahpPairwise     Json?
+  lcmExposure      Json?
+  lcmPhaseCritical Json?
+  pat1Data         Json?
+  pat2Data         Json?
+
+  // Results
+  results         Json?
+  additionalNotes String?
+  isSubmitted     Boolean @default(false)
+}
