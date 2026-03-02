@@ -1,4 +1,4 @@
-import { RISKS, FAHP_SCALE, CRISP_SCALE, RI_TABLE, PAT1_ITEMS, PAT2_ITEMS } from './constants'
+import { RISKS, FAHP_MAP, RI_TABLE, PAT1_ITEMS, PAT2_ITEMS } from './constants'
 
 // FAHP Calculation
 export function calculateFAHP(pairwise: Record<string, string>) {
@@ -17,8 +17,9 @@ export function calculateFAHP(pairwise: Record<string, string>) {
         for (let j = i + 1; j < n; j++) {
             const k = `${RISKS[i].code}_${RISKS[j].code}`
             const v = pairwise[k]
-            if (v && FAHP_SCALE[v]) {
-                tfnM[i][j] = [...FAHP_SCALE[v].tfn]
+            const item = v ? FAHP_MAP[v.toString()] : null
+            if (item) {
+                tfnM[i][j] = [...item.tfn] as [number, number, number]
                 tfnM[j][i] = [1 / tfnM[i][j][2], 1 / tfnM[i][j][1], 1 / tfnM[i][j][0]]
             }
         }
@@ -63,7 +64,8 @@ export function calculateFAHP(pairwise: Record<string, string>) {
             if (i === j) crispM[i][j] = 1
             else if (i < j) {
                 const k = `${RISKS[i].code}_${RISKS[j].code}`
-                crispM[i][j] = CRISP_SCALE[pairwise[k]] || 1
+                const v = pairwise[k]
+                crispM[i][j] = v ? (FAHP_MAP[v.toString()]?.crisp || 1) : 1
             } else {
                 crispM[i][j] = 1 / crispM[j][i]
             }

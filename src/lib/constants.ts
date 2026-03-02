@@ -12,30 +12,25 @@ export type RiskCode = typeof RISKS[number]['code']
 
 export const PHASES = ['Perencanaan', 'Penyiapan', 'Transaksi', 'Implementasi'] as const
 
-// FAHP Scale with Triangular Fuzzy Numbers
-export const FAHP_SCALE: Record<string, { tfn: [number, number, number] }> = {
-    'SI': { tfn: [1, 1, 1] },
-    'SLI': { tfn: [1, 2, 3] },
-    'LI': { tfn: [2, 3, 4] },
-    'SVI': { tfn: [3, 4, 5] },
-    'EI': { tfn: [4, 5, 6] },
-    '1/SLI': { tfn: [1 / 3, 1 / 2, 1] },
-    '1/LI': { tfn: [1 / 4, 1 / 3, 1 / 2] },
-    '1/SVI': { tfn: [1 / 5, 1 / 4, 1 / 3] },
-    '1/EI': { tfn: [1 / 6, 1 / 5, 1 / 4] },
-}
+// FAHP Scale with Triangular Fuzzy Numbers and Crisp Values
+export const FAHP_SCALE = [
+    { code: 'SI', labelID: 'Sama Penting', labelEN: 'Equal Importance', tfn: [1, 1, 1], crisp: 1 },
+    { code: 'SLI', labelID: 'Sedikit Lebih Penting', labelEN: 'Slightly More Important', tfn: [1, 2, 3], crisp: 2 },
+    { code: 'LI', labelID: 'Lebih Penting', labelEN: 'More Important', tfn: [2, 3, 4], crisp: 3 },
+    { code: 'SVI', labelID: 'Sangat Lebih Penting', labelEN: 'Strongly More Important', tfn: [3, 4, 5], crisp: 4 },
+    { code: 'EI', labelID: 'Ekstrem Lebih Penting', labelEN: 'Extremely More Important', tfn: [4, 5, 6], crisp: 5 },
+    { code: '1/SLI', labelID: 'Kebalikan SLI', labelEN: 'Reciprocal SLI', tfn: [1 / 3, 1 / 2, 1], crisp: 0.61 },
+    { code: '1/LI', labelID: 'Kebalikan LI', labelEN: 'Reciprocal LI', tfn: [1 / 4, 1 / 3, 1 / 2], crisp: 0.36 },
+    { code: '1/SVI', labelID: 'Kebalikan SVI', labelEN: 'Reciprocal SVI', tfn: [1 / 5, 1 / 4, 1 / 3], crisp: 0.26 },
+    { code: '1/EI', labelID: 'Kebalikan EI', labelEN: 'Reciprocal EI', tfn: [1 / 6, 1 / 5, 1 / 4], crisp: 0.21 },
+]
 
-export const CRISP_SCALE: Record<string, number> = {
-    'SI': 1,
-    'SLI': 2,
-    'LI': 3,
-    'SVI': 4,
-    'EI': 5,
-    '1/SLI': 1 / 2,
-    '1/LI': 1 / 3,
-    '1/SVI': 1 / 4,
-    '1/EI': 1 / 5,
-}
+// For backward compatibility and easier lookup
+export const FAHP_MAP: Record<string, typeof FAHP_SCALE[number]> = {}
+FAHP_SCALE.forEach(item => {
+    FAHP_MAP[item.code] = item
+    FAHP_MAP[item.crisp.toString()] = item
+})
 
 export const RI_TABLE: Record<number, number> = {
     1: 0, 2: 0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     RISKS, PHASES, STEPS, PAT1_ITEMS, PAT2_ITEMS,
-    ROLE_OPTIONS, EXPERIENCE_OPTIONS, PROJECT_STATUS_OPTIONS
+    ROLE_OPTIONS, EXPERIENCE_OPTIONS, PROJECT_STATUS_OPTIONS,
+    FAHP_SCALE
 } from '@/lib/constants'
 
 // Survey state type
@@ -417,15 +418,11 @@ export default function SurveyPage() {
                                             <div className="fahp-risk left">{p.r1.code}<br /><small>{p.r1.name}</small></div>
                                             <select className="form-select fahp-select" value={data.fahpPairwise[k] || ''} onChange={e => updateFahp(k, e.target.value)}>
                                                 <option value="">-- Pilih --</option>
-                                                <option value="EI">{p.r1.code} Ekstrem (EI)</option>
-                                                <option value="SVI">{p.r1.code} Sangat (SVI)</option>
-                                                <option value="LI">{p.r1.code} Lebih (LI)</option>
-                                                <option value="SLI">{p.r1.code} Sedikit (SLI)</option>
-                                                <option value="SI">Sama (SI)</option>
-                                                <option value="1/SLI">{p.r2.code} Sedikit (1/SLI)</option>
-                                                <option value="1/LI">{p.r2.code} Lebih (1/LI)</option>
-                                                <option value="1/SVI">{p.r2.code} Sangat (1/SVI)</option>
-                                                <option value="1/EI">{p.r2.code} Ekstrem (1/EI)</option>
+                                                {FAHP_SCALE.map(item => (
+                                                    <option key={item.code} value={item.crisp}>
+                                                        {item.code.startsWith('1/') ? p.r2.code : p.r1.code} {item.labelID.replace(' Penting', '')} ({item.code})
+                                                    </option>
+                                                ))}
                                             </select>
                                             <div className="fahp-risk right">{p.r2.code}<br /><small>{p.r2.name}</small></div>
                                         </div>
