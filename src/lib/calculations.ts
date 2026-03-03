@@ -172,10 +172,7 @@ export function determineAllocation(pat: ReturnType<typeof calculatePAT>, code: 
     let tier1Alloc = 'Shared'
     let tier1Reason = 'Kontrol terbagi/verifiability sedang.'
 
-    if ((t1.Control ?? 0) >= 4 && (t1.Verifiability ?? 0) >= 3 && (t1.Incentives ?? 0) >= 3 && (t1.Externality ?? 0) <= 3) {
-        tier1Alloc = 'BU/SPV'
-        tier1Reason = 'Control tinggi, verifiability & incentives memadai.'
-    } else if ((t1.Externality ?? 0) >= 4 || (t1.Control ?? 0) < 3) {
+    if ((t1.Externality ?? 0) >= 4 || (t1.Control ?? 0) < 3) {
         if ((t1.Control ?? 0) < 3) {
             tier1Alloc = 'Publik/PDAM'
             tier1Reason = 'Control BU/SPV rendah, risiko ditahan pemerintah.'
@@ -183,6 +180,9 @@ export function determineAllocation(pat: ReturnType<typeof calculatePAT>, code: 
             tier1Alloc = 'Publik/PDAM'
             tier1Reason = 'Externality tinggi (≥4), risiko dominan faktor eksternal.'
         }
+    } else if ((t1.Control ?? 0) >= 4 && (t1.Verifiability ?? 0) >= 3 && (t1.Incentives ?? 0) >= 3 && (t1.Externality ?? 0) <= 3) {
+        tier1Alloc = 'BU/SPV'
+        tier1Reason = 'Control tinggi, verifiability & incentives memadai.'
     }
 
     let tier2Alloc: string

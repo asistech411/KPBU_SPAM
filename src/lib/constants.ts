@@ -30,10 +30,10 @@ export const FAHP_SCALE = [
     { code: 'LI', labelID: 'Lebih Penting', labelEN: 'More Important', tfn: [2, 3, 4], crisp: 3 },
     { code: 'SVI', labelID: 'Sangat Lebih Penting', labelEN: 'Strongly More Important', tfn: [3, 4, 5], crisp: 4 },
     { code: 'EI', labelID: 'Ekstrem Lebih Penting', labelEN: 'Extremely More Important', tfn: [4, 5, 6], crisp: 5 },
-    { code: '1/SLI', labelID: 'Kebalikan SLI', labelEN: 'Reciprocal SLI', tfn: [1 / 3, 1 / 2, 1], crisp: 0.61 },
-    { code: '1/LI', labelID: 'Kebalikan LI', labelEN: 'Reciprocal LI', tfn: [1 / 4, 1 / 3, 1 / 2], crisp: 0.36 },
-    { code: '1/SVI', labelID: 'Kebalikan SVI', labelEN: 'Reciprocal SVI', tfn: [1 / 5, 1 / 4, 1 / 3], crisp: 0.26 },
-    { code: '1/EI', labelID: 'Kebalikan EI', labelEN: 'Reciprocal EI', tfn: [1 / 6, 1 / 5, 1 / 4], crisp: 0.21 },
+    { code: '1/SLI', labelID: 'Kebalikan SLI', labelEN: 'Reciprocal SLI', tfn: [1 / 3, 1 / 2, 1], crisp: 0.6111 },
+    { code: '1/LI', labelID: 'Kebalikan LI', labelEN: 'Reciprocal LI', tfn: [1 / 4, 1 / 3, 1 / 2], crisp: 0.3611 },
+    { code: '1/SVI', labelID: 'Kebalikan SVI', labelEN: 'Reciprocal SVI', tfn: [1 / 5, 1 / 4, 1 / 3], crisp: 0.2611 },
+    { code: '1/EI', labelID: 'Kebalikan EI', labelEN: 'Reciprocal EI', tfn: [1 / 6, 1 / 5, 1 / 4], crisp: 0.2056 },
 ]
 
 // For backward compatibility and easier lookup
