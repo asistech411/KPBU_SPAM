@@ -9,14 +9,15 @@ import { RISKS, PHASES } from '@/lib/constants'
 interface Results {
     fahp: {
         weights: number[]
+        geometricMeans?: number[]
         CR: number
         CRPass: boolean
     }
     lcm: Record<string, { exposure: number | null; phase: string | null }>
-    pat: {
-        tier1: Record<string, any>
-        tier2: Record<string, any>
-    }
+    pat: Record<string, {
+        tier1: Record<string, number | null>
+        tier2: Record<string, number | null>
+    }>
     allocations: Record<string, {
         tier1: { allocation: string; reason: string }
         tier2: { allocation: string; reason: string; mitigationControls?: string[] }
@@ -193,7 +194,14 @@ export default function ResultsPage() {
                                     <div className="bar-track">
                                         <div className="bar-fill" style={{ width: `${r.fahp.weights[i] * 100 * 3}%`, background: ri.color }} />
                                     </div>
-                                    <div className="bar-value">{(r.fahp.weights[i] * 100).toFixed(1)}%</div>
+                                    <div className="bar-value" style={{ minWidth: '90px', textAlign: 'right' }}>
+                                        <strong>{(r.fahp.weights[i] * 100).toFixed(1)}%</strong>
+                                        {r.fahp.geometricMeans && (
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>
+                                                GM: {r.fahp.geometricMeans[i].toFixed(4)}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -204,7 +212,7 @@ export default function ResultsPage() {
                         <div className="chart-title">Lifecycle Mapping: Keterjadian & Fase Kritis</div>
                         <div className="heatmap">
                             <div className="heatmap-header"></div>
-                            {PHASES.map(p => <div key={p} className="heatmap-header">{p}</div>)}
+                            {PHASES.map(p => <div key={p.value} className="heatmap-header">{p.label}</div>)}
                             {RISKS.map(ri => {
                                 const l = r.lcm[ri.code]
                                 const heatClass = !l.exposure ? '' : l.exposure <= 2 ? 'heat-low' : l.exposure <= 3 ? 'heat-medium' : l.exposure <= 4 ? 'heat-high' : 'heat-critical'
@@ -214,8 +222,8 @@ export default function ResultsPage() {
                                             <strong>{ri.code}</strong> {ri.name} ({l.exposure || '-'})
                                         </div>
                                         {PHASES.map(p => (
-                                            <div key={`${ri.code}-${p}`} className={`heatmap-cell ${l.phase === p ? heatClass : ''}`}>
-                                                {l.phase === p ? '●' : ''}
+                                            <div key={`${ri.code}-${p.value}`} className={`heatmap-cell ${l.phase === p.label ? heatClass : ''}`}>
+                                                {l.phase === p.label ? '●' : ''}
                                             </div>
                                         ))}
                                     </>
@@ -294,6 +302,7 @@ export default function ResultsPage() {
                                     <div className={`accordion-content ${isOpen ? 'active' : ''}`}>
                                         <div style={{ marginBottom: '1rem' }}>
                                             <strong>Bobot:</strong> {(r.fahp.weights[i] * 100).toFixed(1)}% |
+                                            {r.fahp.geometricMeans && <><strong> Geomean:</strong> {r.fahp.geometricMeans[i].toFixed(4)} |</>}
                                             <strong> Keterjadian:</strong> {r.lcm[ri.code].exposure || '-'}/5 |
                                             <strong> Fase:</strong> {r.lcm[ri.code].phase || '-'}
                                         </div>

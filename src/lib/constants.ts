@@ -10,7 +10,18 @@ export const RISKS = [
 
 export type RiskCode = typeof RISKS[number]['code']
 
-export const PHASES = ['Perencanaan', 'Penyiapan', 'Transaksi', 'Implementasi'] as const
+export const PHASES = [
+    { value: 1, label: 'Perencanaan', labelEN: 'Planning' },
+    { value: 2, label: 'Penyiapan', labelEN: 'Preparation' },
+    { value: 3, label: 'Transaksi', labelEN: 'Transaction' },
+    { value: 4, label: 'Implementasi', labelEN: 'Implementation' },
+] as const
+
+export const PHASE_MAP: Record<string | number, typeof PHASES[number]> = {}
+PHASES.forEach(p => {
+    PHASE_MAP[p.value] = p
+    PHASE_MAP[p.label] = p
+})
 
 // FAHP Scale with Triangular Fuzzy Numbers and Crisp Values
 export const FAHP_SCALE = [

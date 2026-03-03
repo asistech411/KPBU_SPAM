@@ -24,7 +24,7 @@ interface SurveyState {
     projectPhase: string
     fahpPairwise: Record<string, string>
     lcmExposure: Record<string, number>
-    lcmPhaseCritical: Record<string, string>
+    lcmPhaseCritical: Record<string, string | number>
     pat1Data: Record<string, Record<string, number | 'TT'>>
     pat2Data: Record<string, Record<string, number | 'TT'>>
     additionalNotes: string
@@ -117,7 +117,7 @@ export default function SurveyPage() {
         }))
     }
 
-    const updateLcmPhase = (code: string, value: string) => {
+    const updateLcmPhase = (code: string, value: string | number) => {
         setData(prev => ({
             ...prev,
             lcmPhaseCritical: { ...prev.lcmPhaseCritical, [code]: value }
@@ -284,9 +284,9 @@ export default function SurveyPage() {
                                     <label className="form-label">SCR-04. Fase KPBU yang pernah ditangani (boleh &gt;1): <span style={{ color: 'var(--danger)' }}>*</span></label>
                                     <div className="checkbox-group horizontal">
                                         {PHASES.map(p => (
-                                            <label key={p} className={`checkbox-label ${data.phases.includes(p) ? 'selected' : ''}`}>
-                                                <input type="checkbox" checked={data.phases.includes(p)} onChange={() => togglePhase(p)} />
-                                                <span>{p}</span>
+                                            <label key={p.value} className={`checkbox-label ${data.phases.includes(p.label) ? 'selected' : ''}`}>
+                                                <input type="checkbox" checked={data.phases.includes(p.label)} onChange={() => togglePhase(p.label)} />
+                                                <span>{p.label}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -368,7 +368,7 @@ export default function SurveyPage() {
                             <label className="form-label">PR-05. Fase dominan pengalaman Anda: <span style={{ color: 'var(--danger)' }}>*</span></label>
                             <select className="form-select" value={data.projectPhase} onChange={e => updateField('projectPhase', e.target.value)}>
                                 <option value="">-- Pilih fase --</option>
-                                {PHASES.map(p => <option key={p} value={p}>{p}</option>)}
+                                {PHASES.map(p => <option key={p.value} value={p.label}>{p.label}</option>)}
                             </select>
                         </div>
 
@@ -483,15 +483,20 @@ export default function SurveyPage() {
                         <div style={{ overflowX: 'auto' }}>
                             <table className="likert-grid">
                                 <thead>
-                                    <tr><th>Risiko</th>{PHASES.map(p => <th key={p}>{p}</th>)}</tr>
+                                    <tr><th>Risiko</th>{PHASES.map(p => <th key={p.value}>{p.label}</th>)}</tr>
                                 </thead>
                                 <tbody>
                                     {RISKS.map(r => (
                                         <tr key={r.code}>
                                             <td><strong>{r.code}</strong> {r.name}</td>
                                             {PHASES.map(p => (
-                                                <td key={p}>
-                                                    <input type="radio" name={`lcm02_${r.code}`} checked={data.lcmPhaseCritical[r.code] === p} onChange={() => updateLcmPhase(r.code, p)} />
+                                                <td key={p.value}>
+                                                    <input
+                                                        type="radio"
+                                                        name={`lcm02_${r.code}`}
+                                                        checked={data.lcmPhaseCritical[r.code] === p.value || data.lcmPhaseCritical[r.code] === p.label}
+                                                        onChange={() => updateLcmPhase(r.code, p.value)}
+                                                    />
                                                 </td>
                                             ))}
                                         </tr>

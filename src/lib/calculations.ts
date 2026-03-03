@@ -1,62 +1,17 @@
-import { RISKS, FAHP_MAP, RI_TABLE, PAT1_ITEMS, PAT2_ITEMS } from './constants'
+import { RISKS, FAHP_MAP, RI_TABLE, PAT1_ITEMS, PAT2_ITEMS, PHASE_MAP } from './constants'
 
 // FAHP Calculation
 export function calculateFAHP(pairwise: Record<string, string>) {
     const n = 6
-
-    // Build TFN matrix
-    const tfnM: [number, number, number][][] = []
-    for (let i = 0; i < n; i++) {
-        tfnM[i] = []
-        for (let j = 0; j < n; j++) {
-            tfnM[i][j] = i === j ? [1, 1, 1] : [1, 1, 1]
-        }
+    const getItem = (v?: string) => (v ? FAHP_MAP[v.toString()] : undefined)
+    const getReciprocalItem = (item: NonNullable<ReturnType<typeof getItem>>) => {
+        const reciprocalCode = item.code.startsWith('1/')
+            ? item.code.slice(2)
+            : `1/${item.code}`
+        return FAHP_MAP[reciprocalCode]
     }
 
-    for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
-            const k = `${RISKS[i].code}_${RISKS[j].code}`
-            const v = pairwise[k]
-            const item = v ? FAHP_MAP[v.toString()] : null
-            if (item) {
-                tfnM[i][j] = [...item.tfn] as [number, number, number]
-                tfnM[j][i] = [1 / tfnM[i][j][2], 1 / tfnM[i][j][1], 1 / tfnM[i][j][0]]
-            }
-        }
-    }
-
-    // Geometric mean
-    const Gi: [number, number, number][] = []
-    for (let i = 0; i < n; i++) {
-        let pL = 1, pM = 1, pU = 1
-        for (let j = 0; j < n; j++) {
-            pL *= tfnM[i][j][0]
-            pM *= tfnM[i][j][1]
-            pU *= tfnM[i][j][2]
-        }
-        Gi.push([Math.pow(pL, 1 / n), Math.pow(pM, 1 / n), Math.pow(pU, 1 / n)])
-    }
-
-    // Sum
-    const Gs: [number, number, number] = [0, 0, 0]
-    Gi.forEach(g => {
-        Gs[0] += g[0]
-        Gs[1] += g[1]
-        Gs[2] += g[2]
-    })
-
-    // Inverse
-    const GsI: [number, number, number] = [1 / Gs[2], 1 / Gs[1], 1 / Gs[0]]
-
-    // Fuzzy weights
-    const Wi = Gi.map(g => [g[0] * GsI[0], g[1] * GsI[1], g[2] * GsI[2]])
-
-    // Defuzzify
-    const wS = Wi.map(w => (w[0] + w[1] + w[2]) / 3)
-    const sum = wS.reduce((a, b) => a + b, 0)
-    const weights = wS.map(w => w / sum)
-
-    // Consistency check with crisp values
+    // Build crisp matrix using the selected scale and its reciprocal pair code.
     const crispM: number[][] = []
     for (let i = 0; i < n; i++) {
         crispM[i] = []
@@ -64,13 +19,26 @@ export function calculateFAHP(pairwise: Record<string, string>) {
             if (i === j) crispM[i][j] = 1
             else if (i < j) {
                 const k = `${RISKS[i].code}_${RISKS[j].code}`
-                const v = pairwise[k]
-                crispM[i][j] = v ? (FAHP_MAP[v.toString()]?.crisp || 1) : 1
+                crispM[i][j] = getItem(pairwise[k])?.crisp || 1
             } else {
-                crispM[i][j] = 1 / crispM[j][i]
+                const k = `${RISKS[j].code}_${RISKS[i].code}`
+                const upperItem = getItem(pairwise[k])
+                if (upperItem) {
+                    crispM[i][j] = getReciprocalItem(upperItem)?.crisp || (1 / crispM[j][i])
+                } else {
+                    crispM[i][j] = 1
+                }
             }
         }
     }
+
+    // Crisp geometric mean (match spreadsheet validation)
+    const geometricMeans = crispM.map(row => {
+        const product = row.reduce((a, b) => a * b, 1)
+        return Math.pow(product, 1 / n)
+    })
+    const gmSum = geometricMeans.reduce((a, b) => a + b, 0)
+    const weights = geometricMeans.map(g => g / gmSum)
 
     // A * w
     const Aw: number[] = []
@@ -89,6 +57,7 @@ export function calculateFAHP(pairwise: Record<string, string>) {
 
     return {
         weights,
+        geometricMeans,
         CR,
         CRPass: CR < 0.10,
         lambdaMax
@@ -96,12 +65,13 @@ export function calculateFAHP(pairwise: Record<string, string>) {
 }
 
 // LCM Calculation
-export function calculateLCM(exposure: Record<string, number>, phaseCritical: Record<string, string>) {
+export function calculateLCM(exposure: Record<string, number>, phaseCritical: Record<string, string | number>) {
     const result: Record<string, { exposure: number | null; phase: string | null }> = {}
     RISKS.forEach(r => {
+        const p = phaseCritical[r.code]
         result[r.code] = {
             exposure: exposure[r.code] ?? null,
-            phase: phaseCritical[r.code] ?? null
+            phase: p ? (PHASE_MAP[p.toString()]?.label || p.toString()) : null
         }
     })
     return result
@@ -109,12 +79,30 @@ export function calculateLCM(exposure: Record<string, number>, phaseCritical: Re
 
 type PATData = Record<string, Record<string, number | 'TT'>>
 
+type Tier1Metrics = {
+    Control: number | null;
+    Info: number | null;
+    Verifiability: number | null;
+    Externality: number | null;
+    ExternalityReversed: number | null;
+    Capacity: number | null;
+    Incentives: number | null;
+    ttCount: number;
+    totalItems: number;
+}
+
+type Tier2Metrics = {
+    Control: number | null;
+    Verifiability: number | null;
+    Incentives: number | null;
+    Capacity: number | null;
+    ttCount: number;
+    totalItems: number;
+}
+
 // PAT Calculation
 export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
-    const result: {
-        tier1: Record<string, any>
-        tier2: Record<string, any>
-    } = { tier1: {}, tier2: {} }
+    const result: Record<string, { tier1: Tier1Metrics; tier2: Tier2Metrics }> = {}
 
     const mean = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null
 
@@ -137,18 +125,6 @@ export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
             }
         })
 
-        result.tier1[r.code] = {
-            Control: mean(t1C.Control),
-            Info: mean(t1C.Info),
-            Verifiability: mean(t1C.Verifiability),
-            Externality: mean(t1C.ExternalityRaw),
-            ExternalityReversed: mean(t1C.Externality),
-            Capacity: mean(t1C.Capacity),
-            Incentives: mean(t1C.Incentives),
-            ttCount: PAT1_ITEMS.filter(i => t1D[i.code] === 'TT').length,
-            totalItems: PAT1_ITEMS.length
-        }
-
         const t2D = pat2Data[r.code] || {}
         const t2C: Record<string, number[]> = {
             Control: [], Verifiability: [], Incentives: [], Capacity: []
@@ -162,13 +138,26 @@ export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
             }
         })
 
-        result.tier2[r.code] = {
-            Control: mean(t2C.Control),
-            Verifiability: mean(t2C.Verifiability),
-            Incentives: mean(t2C.Incentives),
-            Capacity: mean(t2C.Capacity),
-            ttCount: PAT2_ITEMS.filter(i => t2D[i.code] === 'TT').length,
-            totalItems: PAT2_ITEMS.length
+        result[r.code] = {
+            tier1: {
+                Control: mean(t1C.Control),
+                Info: mean(t1C.Info),
+                Verifiability: mean(t1C.Verifiability),
+                Externality: mean(t1C.ExternalityRaw),
+                ExternalityReversed: mean(t1C.Externality),
+                Capacity: mean(t1C.Capacity),
+                Incentives: mean(t1C.Incentives),
+                ttCount: PAT1_ITEMS.filter(i => t1D[i.code] === 'TT').length,
+                totalItems: PAT1_ITEMS.length
+            },
+            tier2: {
+                Control: mean(t2C.Control),
+                Verifiability: mean(t2C.Verifiability),
+                Incentives: mean(t2C.Incentives),
+                Capacity: mean(t2C.Capacity),
+                ttCount: PAT2_ITEMS.filter(i => t2D[i.code] === 'TT').length,
+                totalItems: PAT2_ITEMS.length
+            }
         }
     })
 
@@ -177,17 +166,17 @@ export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
 
 // Allocation determination
 export function determineAllocation(pat: ReturnType<typeof calculatePAT>, code: string) {
-    const t1 = pat.tier1[code]
-    const t2 = pat.tier2[code]
+    const t1 = pat[code].tier1
+    const t2 = pat[code].tier2
 
     let tier1Alloc = 'Shared'
     let tier1Reason = 'Kontrol terbagi/verifiability sedang.'
 
-    if (t1.Control >= 4 && t1.Verifiability >= 3 && t1.Incentives >= 3 && t1.Externality <= 3) {
+    if ((t1.Control ?? 0) >= 4 && (t1.Verifiability ?? 0) >= 3 && (t1.Incentives ?? 0) >= 3 && (t1.Externality ?? 0) <= 3) {
         tier1Alloc = 'BU/SPV'
         tier1Reason = 'Control tinggi, verifiability & incentives memadai.'
-    } else if (t1.Externality >= 4 || t1.Control < 3) {
-        if (t1.Control < 3) {
+    } else if ((t1.Externality ?? 0) >= 4 || (t1.Control ?? 0) < 3) {
+        if ((t1.Control ?? 0) < 3) {
             tier1Alloc = 'Publik/PDAM'
             tier1Reason = 'Control BU/SPV rendah, risiko ditahan pemerintah.'
         } else {
@@ -205,10 +194,10 @@ export function determineAllocation(pat: ReturnType<typeof calculatePAT>, code: 
         tier2Reason = 'Tier-2 tidak diterapkan untuk domain publik-lead.'
         mitigationControls = deriveMitigationControls(t2, code)
     } else {
-        if (t2.Control >= 4 && t2.Verifiability >= 4) {
+        if ((t2.Control ?? 0) >= 4 && (t2.Verifiability ?? 0) >= 4) {
             tier2Alloc = 'EPC/O&M'
             tier2Reason = 'Control & verifiability tinggi, transfer risiko layak.'
-        } else if (t2.Control >= 3 && t2.Verifiability >= 3) {
+        } else if ((t2.Control ?? 0) >= 3 && (t2.Verifiability ?? 0) >= 3) {
             tier2Alloc = 'Shared'
             tier2Reason = 'Control/verifiability sedang, berbagi dengan BU/SPV.'
         } else {
@@ -223,15 +212,15 @@ export function determineAllocation(pat: ReturnType<typeof calculatePAT>, code: 
     }
 }
 
-function deriveMitigationControls(t2: any, code: string): string[] {
+function deriveMitigationControls(t2: Record<string, number | null>, code: string): string[] {
     const controls: string[] = []
     controls.push('KPI teknis terukur (availability, kualitas output, response time)')
     controls.push('Milestone readiness & commissioning checklist')
     controls.push('Audit access & data transparency clause')
 
-    if (t2.Verifiability < 3.5) controls.push('Third-party verification pada milestone kritis')
-    if (t2.Control >= 3) controls.push('Performance bond/retention terkait pencapaian teknis')
-    if (t2.Incentives < 3.5) controls.push('Payment trigger berbasis milestone (bukan lump-sum)')
+    if ((t2.Verifiability ?? 0) < 3.5) controls.push('Third-party verification pada milestone kritis')
+    if ((t2.Control ?? 0) >= 3) controls.push('Performance bond/retention terkait pencapaian teknis')
+    if ((t2.Incentives ?? 0) < 3.5) controls.push('Payment trigger berbasis milestone (bukan lump-sum)')
     controls.push('Defect liability period dengan jaminan pemeliharaan')
 
     return controls.slice(0, 5)
@@ -245,8 +234,8 @@ export function determineGovernanceLocks(
     dualRole: boolean
 ) {
     const locks: string[] = []
-    const t1 = pat.tier1[code]
-    const t2 = pat.tier2[code]
+    const t1 = pat[code].tier1
+    const t2 = pat[code].tier2
     const isGovLead = alloc.tier1.allocation === 'Publik/PDAM'
 
     if (isGovLead) {
@@ -254,8 +243,8 @@ export function determineGovernanceLocks(
         locks.push('⚠️ RISK RESERVE: Alokasi anggaran kontingensi untuk risiko yang ditahan')
         locks.push('Eskalasi & force majeure clause dengan definisi jelas')
         locks.push('Periodic review clause untuk kondisi eksternal berubah')
-        if (t1.Verifiability < 3.5) locks.push('Dashboard monitoring real-time untuk deteksi dini')
-        if (t1.Incentives < 3.5) locks.push('Performance framework internal PDAM dengan reward/consequence')
+        if ((t1.Verifiability ?? 0) < 3.5) locks.push('Dashboard monitoring real-time untuk deteksi dini')
+        if ((t1.Incentives ?? 0) < 3.5) locks.push('Performance framework internal PDAM dengan reward/consequence')
     }
 
     if (alloc.tier1.allocation === 'Shared' || alloc.tier2.allocation === 'Shared') {
@@ -265,11 +254,11 @@ export function determineGovernanceLocks(
     }
 
     if (!isGovLead) {
-        if (t1.Verifiability < 3.5 || t2.Verifiability < 3.5) {
+        if ((t1.Verifiability ?? 0) < 3.5 || (t2.Verifiability ?? 0) < 3.5) {
             locks.push('Verifikasi independen pada milestone kritis')
             locks.push('Definisi KPI/metode ukur spesifik')
         }
-        if (t1.Incentives < 3.5 || t2.Incentives < 3.5) {
+        if ((t1.Incentives ?? 0) < 3.5 || (t2.Incentives ?? 0) < 3.5) {
             locks.push('Payment trigger/holdback terkait kinerja')
             locks.push('Mekanisme insentif-disinsentif jelas')
         }
@@ -289,16 +278,15 @@ export function determineGovernanceLocks(
     return [...new Set(locks)].slice(0, 6)
 }
 
-// Confidence level
 export function determineConfidence(
     fahp: ReturnType<typeof calculateFAHP>,
     pat: ReturnType<typeof calculatePAT>,
     code: string
 ) {
-    const t1 = pat.tier1[code]
-    const t2 = pat.tier2[code]
-    const tt1 = t1.ttCount / t1.totalItems
-    const tt2 = t2.ttCount / t2.totalItems
+    const t1 = pat[code].tier1
+    const t2 = pat[code].tier2
+    const tt1 = (t1.ttCount ?? 0) / (t1.totalItems ?? 1)
+    const tt2 = (t2.ttCount ?? 0) / (t2.totalItems ?? 1)
     const weak = t1.Control === null || t1.Verifiability === null || t2.Control === null || t2.Verifiability === null
 
     if (!fahp.CRPass || tt1 > 0.4 || tt2 > 0.4 || weak) {
