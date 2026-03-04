@@ -80,3 +80,27 @@ export interface AuditCheck {
     value: string
     pass: boolean
 }
+
+// Survey form state — shared across SurveyPage and all step components
+export interface SurveyState {
+    id?: string
+    consent: boolean
+    screening01?: string
+    role: string
+    experience: string
+    phases: string[]
+    dualRole: boolean
+    projectType: string
+    projectLocation: string
+    projectPayment: string
+    projectStatus: string
+    projectPhase: string
+    fahpPairwise: Record<string, string>
+    lcmExposure: Record<string, number>
+    lcmPhaseCritical: Record<string, string | number>
+    pat1Data: Record<string, Record<string, number | 'TT'>>
+    pat2Data: Record<string, Record<string, number | 'TT'>>
+    additionalNotes: string
+    respondentName: string
+    respondentEmail: string
+}
