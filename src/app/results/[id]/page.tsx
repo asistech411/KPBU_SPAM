@@ -4,14 +4,19 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { RISKS, PHASES } from '@/lib/constants'
-import type { LCMStats, LCMMapping, Tier1, Tier2, Results, Survey, AuditCheck } from '@/lib/types'
+import { RISKS } from '@/lib/constants'
+import type { Survey, AuditCheck } from '@/lib/types'
 import { getLCMMapping, getLCMStats, fmt1, fmt2, fmtPct, strictLockCount } from '@/lib/utils'
-import {
-    Download, FileText, Printer, BarChart2, Search,
-    Lock, AlertTriangle, Wrench, Home, ChevronLeft,
-    CheckCircle, XCircle, Layers,
-} from '@/lib/icons'
+import KPIGrid from '@/components/results/KPIGrid'
+import AuditChecksTable from '@/components/results/AuditChecksTable'
+import ExportButtons from '@/components/results/ExportButtons'
+import FAHPDetailTable from '@/components/results/FAHPDetailTable'
+import FAHPBarChart from '@/components/results/FAHPBarChart'
+import LCMHeatmap from '@/components/results/LCMHeatmap'
+import AllocationMatrix from '@/components/results/AllocationMatrix'
+import RiskAccordion from '@/components/results/RiskAccordion'
+import OutputSummaryCard from '@/components/results/OutputSummaryCard'
+import { BarChart2, Home, ChevronLeft, Layers } from '@/lib/icons'
 
 // --- Component ---
 
@@ -238,446 +243,66 @@ export default function ResultsPage() {
                     <p className="card-subtitle">Berdasarkan jawaban Anda, berikut hasil analisis alokasi risiko KPBU SPAM.</p>
 
                     {/* KPI Grid — 10 cards (BL-04) */}
-                    <div className="kpi-grid">
-                        <div className={`kpi-card ${r.fahp.CRPass ? 'success' : 'warning'}`}>
-                            <div className="kpi-value">{(r.fahp.CR * 100).toFixed(1)}%</div>
-                            <div className="kpi-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                {r.fahp.CRPass
-                                    ? <><CheckCircle size={14} color="#059669" /> Lolos CR</>
-                                    : <><AlertTriangle size={14} color="#d97706" /> Perlu Review</>}
-                            </div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{topRisk.code}</div>
-                            <div className="kpi-label">Top Risk ({fmtPct(r.fahp.weights[topRIdx])})</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{fmt1(avgExp)}</div>
-                            <div className="kpi-label">Rata-rata Keterjadian</div>
-                        </div>
-                        <div className={`kpi-card ${sharedCount > 3 ? 'warning' : ''}`}>
-                            <div className="kpi-value">{sharedCount}</div>
-                            <div className="kpi-label">Risiko Shared</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{lcmStats?.dominantPhase ?? '-'}</div>
-                            <div className="kpi-label">Fase Dominan</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{fmt2(surveyPAT1)}</div>
-                            <div className="kpi-label">Skor PAT Tier-1</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{fmt2(surveyPAT2)}</div>
-                            <div className="kpi-label">Skor PAT Tier-2</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value" style={{ fontSize: '0.95rem' }}>{topAlloc.tier1.allocation}</div>
-                            <div className="kpi-label">Alokasi T1 ({topRisk.code})</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value" style={{ fontSize: '0.95rem' }}>{topAlloc.tier2.allocation}</div>
-                            <div className="kpi-label">Alokasi T2 ({topRisk.code})</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{totalLockCount}</div>
-                            <div className="kpi-label">Governance Locks</div>
-                        </div>
-                    </div>
+                    <KPIGrid
+                        crPercent={`${(r.fahp.CR * 100).toFixed(1)}%`}
+                        crPass={r.fahp.CRPass}
+                        topRiskCode={topRisk.code}
+                        topRiskWeightLabel={fmtPct(r.fahp.weights[topRIdx])}
+                        avgExposureLabel={fmt1(avgExp)}
+                        sharedCount={sharedCount}
+                        dominantPhase={lcmStats?.dominantPhase ?? '-'}
+                        surveyPAT1Label={fmt2(surveyPAT1)}
+                        surveyPAT2Label={fmt2(surveyPAT2)}
+                        topTier1Allocation={topAlloc.tier1.allocation}
+                        topTier2Allocation={topAlloc.tier2.allocation}
+                        totalLockCount={totalLockCount}
+                    />
 
                     {/* Output Summary Section (BL-05) */}
-                    <div className="chart-container">
-                        <div className="chart-title">Ringkasan Analisis</div>
+                    <OutputSummaryCard
+                        lcmStats={lcmStats}
+                        pat={r.pat}
+                        allocations={r.allocations}
+                        surveyPAT1={surveyPAT1}
+                        surveyPAT2={surveyPAT2}
+                        topRiskCode={topRisk.code}
+                    />
 
-                        {/* LCM Exposure Summary */}
-                        {lcmStats && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>LCM — Statistik Keterjadian Risiko</p>
-                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                                    {[
-                                        { label: 'Rata-rata', value: fmt1(lcmStats.avgExposure) },
-                                        { label: 'Maksimum', value: lcmStats.maxExposure ?? '-' },
-                                        { label: 'Minimum', value: lcmStats.minExposure ?? '-' },
-                                        { label: 'Risiko Tinggi (≥4)', value: lcmStats.highRiskCount },
-                                        { label: 'Risiko Rendah (≤2)', value: lcmStats.lowRiskCount },
-                                    ].map(item => (
-                                        <div key={item.label} style={{ textAlign: 'center', padding: '0.75rem 1rem', background: 'var(--bg)', borderRadius: '8px', minWidth: '100px', flex: 1 }}>
-                                            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary)' }}>{item.value}</div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>{item.label}</div>
-                                        </div>
-                                    ))}
-                                </div>
+                    <FAHPDetailTable fahp={r.fahp} />
 
-                                {/* Phase Distribution */}
-                                <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>
-                                    Distribusi Fase Kritis &mdash; Dominan: <span style={{ color: 'var(--primary)' }}>{lcmStats.dominantPhase ?? '-'}</span>
-                                </p>
-                                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                    {lcmStats.phaseDistribution.map(d => (
-                                        <div key={d.phase} style={{
-                                            flex: 1, minWidth: '120px', padding: '0.75rem',
-                                            background: d.phase === lcmStats.dominantPhase ? 'var(--primary)' : 'var(--bg)',
-                                            color: d.phase === lcmStats.dominantPhase ? '#fff' : 'inherit',
-                                            borderRadius: '8px', textAlign: 'center'
-                                        }}>
-                                            <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{d.count}</div>
-                                            <div style={{ fontSize: '0.75rem', opacity: 0.85 }}>{d.phase}</div>
-                                            <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>{d.percentage.toFixed(1)}%</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                    <FAHPBarChart fahp={r.fahp} />
 
-                        {/* PAT Overall Summary */}
-                        <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>PAT — Skor Per Risiko</p>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="allocation-matrix">
-                                <thead>
-                                    <tr>
-                                        <th>Risiko</th>
-                                        <th>PAT1 Score</th>
-                                        <th>PAT2 Score</th>
-                                        <th>Alokasi T1</th>
-                                        <th>Alokasi T2</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {RISKS.map(ri => {
-                                        const t1Score = r.pat[ri.code]?.tier1?.overallScore
-                                        const t2Score = r.pat[ri.code]?.tier2?.overallScore
-                                        const a = r.allocations[ri.code]
-                                        const t1c = a.tier1.allocation === 'Publik/PDAM' ? 'alloc-public' : a.tier1.allocation === 'BU/SPV' ? 'alloc-spv' : 'alloc-shared'
-                                        const isGovLead = a.tier1.allocation === 'Publik/PDAM'
-                                        const t2c = isGovLead ? 'alloc-na' : a.tier2.allocation === 'EPC/O&M' ? 'alloc-epc' : a.tier2.allocation === 'BU/SPV-retain' ? 'alloc-spv' : 'alloc-shared'
-                                        return (
-                                            <tr key={ri.code}>
-                                                <td><strong>{ri.code}</strong> {ri.name}</td>
-                                                <td>{fmt2(t1Score)}</td>
-                                                <td>{fmt2(t2Score)}</td>
-                                                <td className={t1c}>{a.tier1.allocation}</td>
-                                                <td className={t2c}>{a.tier2.allocation}</td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                                <tfoot>
-                                    <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)' }}>
-                                        <td>Rata-rata Survey</td>
-                                        <td>{fmt2(surveyPAT1)}</td>
-                                        <td>{fmt2(surveyPAT2)}</td>
-                                        <td colSpan={2} style={{ color: 'var(--text-light)', fontWeight: 400, fontSize: '0.8rem' }}>
-                                            berdasarkan risiko tertinggi ({topRisk.code})
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+                    <LCMHeatmap lcmMap={lcmMap} />
 
-                    {/* CALC_FAHP Detail Section — menjawab pertanyaan team "step ini dimana?" */}
-                    <div className="chart-container">
-                        <div className="chart-title">Detail Perhitungan FAHP</div>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
-                            Sesuai CALC_FAHP sheet Excel — Step 2: Geometric Mean → Step 3: Bobot → Step 4: CR Check
-                        </p>
+                    <AllocationMatrix
+                        fahpWeights={r.fahp.weights}
+                        allocations={r.allocations}
+                        confidence={r.confidence}
+                        lcmMap={lcmMap}
+                    />
 
-                        {/* Step 2 + 3 combined table */}
-                        <div style={{ overflowX: 'auto', marginBottom: '1.25rem' }}>
-                            <table className="allocation-matrix">
-                                <thead>
-                                    <tr>
-                                        <th>Risiko</th>
-                                        <th>Step 2: Geometric Mean</th>
-                                        <th>Step 3: Bobot (Weight)</th>
-                                        <th>Persentase</th>
-                                        <th>Rank</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(() => {
-                                        const gmSum = r.fahp.geometricMeans
-                                            ? r.fahp.geometricMeans.reduce((a, b) => a + b, 0)
-                                            : null
-                                        // Rank: urutkan index berdasar weight descending
-                                        const ranked = [...r.fahp.weights]
-                                            .map((w, i) => ({ i, w }))
-                                            .sort((a, b) => b.w - a.w)
-                                        const rankMap: number[] = new Array(RISKS.length)
-                                        ranked.forEach(({ i }, pos) => { rankMap[i] = pos + 1 })
-                                        return RISKS.map((ri, i) => (
-                                            <tr key={ri.code} style={rankMap[i] === 1 ? { background: '#f0f9ff' } : {}}>
-                                                <td><strong style={{ color: ri.color }}>{ri.code}</strong> {ri.name}</td>
-                                                <td style={{ fontFamily: 'monospace' }}>
-                                                    {r.fahp.geometricMeans ? r.fahp.geometricMeans[i].toFixed(4) : '-'}
-                                                </td>
-                                                <td style={{ fontFamily: 'monospace' }}>
-                                                    {r.fahp.weights[i].toFixed(4)}
-                                                </td>
-                                                <td><strong>{fmtPct(r.fahp.weights[i])}</strong></td>
-                                                <td style={{ textAlign: 'center', fontWeight: 700 }}>{rankMap[i]}</td>
-                                            </tr>
-                                        ))
-                                    })()}
-                                </tbody>
-                                <tfoot>
-                                    <tr style={{ borderTop: '2px solid var(--border)', fontWeight: 600 }}>
-                                        <td>CHECK SUM</td>
-                                        <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-light)' }}>
-                                            {r.fahp.geometricMeans
-                                                ? `Σ = ${r.fahp.geometricMeans.reduce((a, b) => a + b, 0).toFixed(4)}`
-                                                : '-'}
-                                        </td>
-                                        <td style={{ fontFamily: 'monospace' }}>
-                                            {r.fahp.weights.reduce((a, b) => a + b, 0).toFixed(4)}
-                                        </td>
-                                        <td style={{ color: r.fahp.weights.reduce((a, b) => a + b, 0) > 0.999 ? 'var(--success)' : 'var(--danger)' }}>
-                                            {r.fahp.weights.reduce((a, b) => a + b, 0) > 0.999 ? '✓ Must = 1.0000' : '⚠ Error'}
-                                        </td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        {/* Step 4: CR Check */}
-                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                            {[
-                                { label: 'λmax', value: r.fahp.lambdaMax?.toFixed(4) ?? '-', note: 'rata-rata A×w/w' },
-                                { label: 'n', value: '6', note: 'jumlah risiko' },
-                                { label: 'CI', value: r.fahp.lambdaMax != null ? (((r.fahp.lambdaMax - 6) / 5)).toFixed(4) : '-', note: '(λmax−n)/(n−1)' },
-                                { label: 'RI (n=6)', value: '1.24', note: 'Saaty table' },
-                                { label: 'CR', value: (r.fahp.CR).toFixed(4), note: 'CI / RI', highlight: true },
-                                { label: 'Status', value: r.fahp.CRPass ? '✓ KONSISTEN' : '⚠ TIDAK KONSISTEN', note: 'threshold < 0.10', pass: r.fahp.CRPass },
-                            ].map(item => (
-                                <div key={item.label} style={{
-                                    flex: 1, minWidth: '100px', padding: '0.75rem',
-                                    background: 'pass' in item ? (item.pass ? '#e8f5e9' : '#ffebee') : 'var(--bg)',
-                                    borderRadius: '8px', textAlign: 'center',
-                                    border: item.highlight ? '2px solid var(--primary)' : 'none'
-                                }}>
-                                    <div style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'monospace' }}>{item.value}</div>
-                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, marginTop: '2px' }}>{item.label}</div>
-                                    <div style={{ fontSize: '0.65rem', color: 'var(--text-light)' }}>{item.note}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* FAHP Bar Chart */}
-                    <div className="chart-container">
-                        <div className="chart-title">Bobot FAHP 6 Risiko</div>
-                        <div className="bar-chart">
-                            {RISKS.map((ri, i) => (
-                                <div key={ri.code} className="bar-item">
-                                    <div className="bar-label"><strong>{ri.code}</strong> {ri.name}</div>
-                                    <div className="bar-track">
-                                        <div className="bar-fill" style={{ width: `${r.fahp.weights[i] * 100 * 3}%`, background: ri.color }} />
-                                    </div>
-                                    <div className="bar-value" style={{ minWidth: '90px', textAlign: 'right' }}>
-                                        <strong>{fmtPct(r.fahp.weights[i])}</strong>
-                                        {r.fahp.geometricMeans && (
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>
-                                                GM: {r.fahp.geometricMeans[i].toFixed(4)}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* LCM Heatmap */}
-                    <div className="chart-container">
-                        <div className="chart-title">Lifecycle Mapping: Keterjadian & Fase Kritis</div>
-                        <div className="heatmap">
-                            <div className="heatmap-header"></div>
-                            {PHASES.map(p => <div key={p.value} className="heatmap-header">{p.label}</div>)}
-                            {RISKS.map(ri => {
-                                const l = lcmMap[ri.code]
-                                const heatClass = !l?.exposure ? '' : l.exposure <= 2 ? 'heat-low' : l.exposure <= 3 ? 'heat-medium' : l.exposure <= 4 ? 'heat-high' : 'heat-critical'
-                                return (
-                                    <>
-                                        <div key={`${ri.code}-label`} className="heatmap-cell heatmap-risk">
-                                            <strong>{ri.code}</strong> {ri.name} ({l?.exposure || '-'})
-                                        </div>
-                                        {PHASES.map(p => (
-                                            <div key={`${ri.code}-${p.value}`} className={`heatmap-cell ${l?.phase === p.label ? heatClass : ''}`}>
-                                                {l?.phase === p.label ? '●' : ''}
-                                            </div>
-                                        ))}
-                                    </>
-                                )
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Allocation Matrix */}
-                    <div className="chart-container">
-                        <div className="chart-title">Matriks Alokasi Risiko 2-Tier</div>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="allocation-matrix">
-                                <thead>
-                                    <tr>
-                                        <th>Risiko</th>
-                                        <th>Bobot</th>
-                                        <th>Fase</th>
-                                        <th>Tier-1</th>
-                                        <th>Tier-2</th>
-                                        <th>Conf</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {RISKS.map((ri, i) => {
-                                        const a = r.allocations[ri.code]
-                                        const c = r.confidence[ri.code]
-                                        const t1c = a.tier1.allocation === 'Publik/PDAM' ? 'alloc-public' : a.tier1.allocation === 'BU/SPV' ? 'alloc-spv' : 'alloc-shared'
-                                        const isGovLead = a.tier1.allocation === 'Publik/PDAM'
-                                        const t2c = isGovLead ? 'alloc-na' : a.tier2.allocation === 'EPC/O&M' ? 'alloc-epc' : a.tier2.allocation === 'BU/SPV-retain' ? 'alloc-spv' : 'alloc-shared'
-                                        const cc = c.level === 'Tinggi' ? 'confidence-high' : c.level === 'Sedang' ? 'confidence-medium' : 'confidence-low'
-                                        return (
-                                            <tr key={ri.code}>
-                                                <td><strong>{ri.code}</strong> {ri.name}</td>
-                                                <td>{fmtPct(r.fahp.weights[i])}</td>
-                                                <td>{lcmMap[ri.code]?.phase || '-'}</td>
-                                                <td className={t1c}>{a.tier1.allocation}</td>
-                                                <td className={t2c}>{a.tier2.allocation}{isGovLead ? '*' : ''}</td>
-                                                <td className={cc}>{c.level}</td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colSpan={6} style={{ fontSize: '0.8rem', color: 'var(--text-light)', textAlign: 'left', paddingTop: '1rem' }}>
-                                            * N/A = Tier-2 tidak diterapkan. Untuk risiko dengan Government/PDAM-lead, tidak ada transfer risiko ke EPC/O&M.
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Detail Accordion */}
-                    <h3 style={{ margin: '2rem 0 1rem' }}>Detail per Risiko</h3>
-                    <div className="accordion">
-                        {RISKS.map((ri, i) => {
-                            const a = r.allocations[ri.code]
-                            const locks = r.governanceLocks[ri.code]
-                            const c = r.confidence[ri.code]
-                            const isOpen = openAccordions.has(ri.code)
-                            const isGovLead = a.tier1.allocation === 'Publik/PDAM'
-                            const cc = c.level === 'Tinggi' ? 'confidence-high' : c.level === 'Sedang' ? 'confidence-medium' : 'confidence-low'
-                            const t1Score = r.pat[ri.code]?.tier1?.overallScore
-                            const t2Score = r.pat[ri.code]?.tier2?.overallScore
-
-                            return (
-                                <div key={ri.code} className="accordion-item">
-                                    <div className={`accordion-header ${isOpen ? 'active' : ''}`} onClick={() => toggleAccordion(ri.code)}>
-                                        <span>
-                                            <strong>{ri.code}</strong>: {ri.fullName} — <span className={cc}>Conf: {c.level}</span>
-                                        </span>
-                                        <svg className="accordion-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                    </div>
-                                    <div className={`accordion-content ${isOpen ? 'active' : ''}`}>
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <strong>Bobot:</strong> {fmtPct(r.fahp.weights[i])} |
-                                            {r.fahp.geometricMeans && <><strong> GM:</strong> {r.fahp.geometricMeans[i].toFixed(4)} |</>}
-                                            <strong> Keterjadian:</strong> {lcmMap[ri.code]?.exposure || '-'}/5 |
-                                            <strong> Fase:</strong> {lcmMap[ri.code]?.phase || '-'} |
-                                            <strong> PAT1:</strong> {fmt2(t1Score)} |
-                                            <strong> PAT2:</strong> {fmt2(t2Score)}
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                                            <div style={{ padding: '1rem', background: isGovLead ? '#fff3e0' : '#e3f2fd', borderRadius: '8px', border: isGovLead ? '2px solid #ff9800' : 'none' }}>
-                                                <strong style={{ color: isGovLead ? '#e65100' : '#1565c0' }}>Tier-1: {a.tier1.allocation}</strong>
-                                                {isGovLead && <span style={{ marginLeft: '0.5rem', padding: '2px 8px', background: '#ff9800', color: '#fff', borderRadius: '4px', fontSize: '0.7rem' }}>RISIKO DITAHAN</span>}
-                                                <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{a.tier1.reason}</p>
-                                            </div>
-                                            <div style={{ padding: '1rem', background: isGovLead ? '#f5f5f5' : '#f3e5f5', borderRadius: '8px' }}>
-                                                <strong style={{ color: isGovLead ? '#757575' : '#7b1fa2' }}>Tier-2: {a.tier2.allocation}</strong>
-                                                <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{a.tier2.reason}</p>
-                                            </div>
-                                        </div>
-
-                                        {isGovLead && a.tier2.mitigationControls && a.tier2.mitigationControls.length > 0 && (
-                                            <div style={{ marginBottom: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%)', borderRadius: '8px', borderLeft: '4px solid #4caf50' }}>
-                                                <strong style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <Wrench size={15} /> Mitigation Controls untuk EPC/O&amp;M:
-                                                </strong>
-                                                <ul style={{ margin: '0.5rem 0 0 1rem', fontSize: '0.85rem' }}>
-                                                    {a.tier2.mitigationControls.map((m, idx) => <li key={idx} style={{ margin: '0.25rem 0' }}>{m}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                {isGovLead
-                                                    ? <><AlertTriangle size={15} color="#e65100" /> Governance Locks (Risiko Ditahan Publik):</>
-                                                    : <><Lock size={15} /> Governance Locks:</>}
-                                            </strong>
-                                            <ul className="locks-list" style={{ marginTop: '0.5rem' }}>
-                                                {locks.map((l, idx) => <li key={idx}>{l}</li>)}
-                                            </ul>
-                                        </div>
-
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                                            <strong>Confidence:</strong> {c.level} — {c.reason}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
+                    <RiskAccordion
+                        fahpWeights={r.fahp.weights}
+                        fahpGeoMeans={r.fahp.geometricMeans}
+                        pat={r.pat}
+                        allocations={r.allocations}
+                        governanceLocks={r.governanceLocks}
+                        confidence={r.confidence}
+                        lcmMap={lcmMap}
+                        openAccordions={openAccordions}
+                        toggleAccordion={toggleAccordion}
+                    />
 
                     {/* BL-07: AUDIT_Checks — 13 Integrity Tests */}
                     <div className="section-divider" />
-                    <div>
-                        <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Search size={18} /> Audit Kelengkapan &amp; Konsistensi
-                            <span style={{ marginLeft: '0.75rem', fontSize: '0.85rem', fontWeight: 'normal', color: auditPassCount === 13 ? '#059669' : '#d97706' }}>
-                                {auditPassCount}/13 lulus
-                            </span>
-                        </h3>
-                        <table className="data-table" style={{ fontSize: '0.82rem' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ width: '60%' }}>Pemeriksaan</th>
-                                    <th style={{ textAlign: 'center' }}>Nilai</th>
-                                    <th style={{ textAlign: 'center' }}>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {auditChecks.map((c, i) => (
-                                    <tr key={i}>
-                                        <td>{c.name}</td>
-                                        <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{c.value}</td>
-                                        <td style={{ textAlign: 'center', fontWeight: 'bold', color: c.pass ? '#059669' : '#dc2626' }}>
-                                            {c.pass
-                                                ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><CheckCircle size={14} /> LULUS</span>
-                                                : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><XCircle size={14} /> GAGAL</span>}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <AuditChecksTable checks={auditChecks} passCount={auditPassCount} />
 
                     {/* Export Buttons */}
-                    <div className="export-buttons">
-                        <button className="btn btn-primary" onClick={downloadJSON} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <Download size={16} /> Unduh JSON
-                        </button>
-                        <button className="btn btn-secondary" onClick={downloadCSV} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <FileText size={16} /> Unduh CSV
-                        </button>
-                        <button className="btn btn-outline" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <Printer size={16} /> Cetak
-                        </button>
-                    </div>
+                    <ExportButtons
+                        onDownloadJSON={downloadJSON}
+                        onDownloadCSV={downloadCSV}
+                        onPrint={() => window.print()}
+                    />
 
                     <div className="btn-group">
                         {isAdmin ? (
