@@ -5,85 +5,13 @@ import { useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { RISKS, PHASES } from '@/lib/constants'
-import type { LCMStats } from '@/lib/calculations'
-
-// --- Types ---
-
-interface LCMMapping {
-    [riskCode: string]: { exposure: number | null; phase: string | null }
-}
-
-interface Tier1 {
-    Control: number | null
-    Info: number | null
-    Verifiability: number | null
-    Externality: number | null    // adjusted (6−raw), sesuai CALC_PAT Excel
-    ExternalityRaw: number | null // raw sebelum reverse
-    Capacity: number | null
-    Incentives: number | null
-    ttCount: number
-    totalItems: number
-    overallScore: number | null
-}
-
-interface Tier2 {
-    Control: number | null
-    Verifiability: number | null
-    Incentives: number | null
-    Capacity: number | null
-    ttCount: number
-    totalItems: number
-    overallScore: number | null
-}
-
-interface Results {
-    fahp: {
-        weights: number[]
-        geometricMeans?: number[]
-        CR: number
-        CRPass: boolean
-        lambdaMax?: number
-    }
-    // Supports both new { mapping, stats } and old flat { R1: {...}, ... } format
-    lcm: { mapping: LCMMapping; stats: LCMStats } | LCMMapping
-    pat: Record<string, { tier1: Tier1; tier2: Tier2 }>
-    allocations: Record<string, {
-        tier1: { allocation: string; reason: string }
-        tier2: { allocation: string; reason: string; mitigationControls?: string[] }
-    }>
-    governanceLocks: Record<string, string[]>
-    confidence: Record<string, { level: string; reason: string }>
-}
-
-interface Survey {
-    id: string
-    respondentName: string
-    respondentEmail?: string
-    results: Results
-    createdAt: string
-}
-
-// --- Backward-compat helpers (support old flat lcm format and new { mapping, stats }) ---
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getLCMMapping(lcm: Results['lcm']): LCMMapping {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw = lcm as any
-    return raw.mapping ?? lcm
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getLCMStats(lcm: Results['lcm']): LCMStats | null {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw = lcm as any
-    return raw.stats ?? null
-}
-
-// --- Formatting helpers ---
-
-const fmt1 = (v: number | null | undefined) => v != null ? v.toFixed(1) : '-'
-const fmt2 = (v: number | null | undefined) => v != null ? v.toFixed(2) : '-'
-const fmtPct = (v: number | null | undefined) => v != null ? `${(v * 100).toFixed(1)}%` : '-'
+import type { LCMStats, LCMMapping, Tier1, Tier2, Results, Survey, AuditCheck } from '@/lib/types'
+import { getLCMMapping, getLCMStats, fmt1, fmt2, fmtPct, strictLockCount } from '@/lib/utils'
+import {
+    Download, FileText, Printer, BarChart2, Search,
+    Lock, AlertTriangle, Wrench, Home, ChevronLeft,
+    CheckCircle, XCircle, Layers,
+} from '@/lib/icons'
 
 // --- Component ---
 
@@ -177,7 +105,8 @@ export default function ResultsPage() {
                     <p>Survey dengan ID ini tidak ditemukan atau belum di-submit.</p>
                     <div className="btn-group">
                         <Link href={isAdmin ? '/admin' : '/'} className="btn btn-primary">
-                            {isAdmin ? '← Kembali ke Admin Dashboard' : 'Kembali ke Beranda'}
+                            <ChevronLeft size={16} />
+                            {isAdmin ? 'Kembali ke Admin Dashboard' : 'Kembali ke Beranda'}
                         </Link>
                     </div>
                 </div>
@@ -196,20 +125,9 @@ export default function ResultsPage() {
         r.allocations[ri.code].tier1.allocation === 'Shared' ||
         r.allocations[ri.code].tier2.allocation === 'Shared'
     ).length
-    // BL-06: Strict 5-type lock count sesuai Excel CALC_Allocation
-    function strictLockCount(riskCode: string): number {
-        const t1 = r.pat[riskCode]?.tier1
-        const alloc = r.allocations[riskCode]
-        if (!t1 || !alloc) return 0
-        let count = 0
-        if (alloc.tier1.allocation === 'Shared') count++                    // 1. Joint monitoring
-        if ((t1.Verifiability ?? 99) < 3.5) count++                        // 2. Third-party verification
-        if ((t1.Incentives ?? 99) < 3.5) count++                           // 3. Performance-linked payment
-        if (alloc.tier1.allocation === 'Publik/PDAM') count++              // 4. Tariff adjustment clause
-        if (alloc.tier1.allocation === 'Publik/PDAM') count++              // 5. Risk reserve fund
-        return count
-    }
-    const totalLockCount = RISKS.reduce((sum, ri) => sum + strictLockCount(ri.code), 0)
+    // BL-06: Strict 5-type lock count sesuai Excel CALC_Allocation (dari utils.ts)
+    const totalLockCount = RISKS.reduce((sum, ri) => sum + strictLockCount(ri.code, r.pat, r.allocations), 0)
+
 
     // Survey-level PAT overall scores (average across all 6 risks)
     const pat1Scores = RISKS.map(ri => r.pat[ri.code]?.tier1?.overallScore).filter((v): v is number => v != null)
@@ -227,7 +145,7 @@ export default function ResultsPage() {
     // BL-07: Compute 13 AUDIT_Checks (integrity tests)
     const weightSum = r.fahp.weights.reduce((a, b) => a + b, 0)
     const phaseDistSum = lcmStats ? Object.values(lcmStats.phaseDistribution).reduce((a, b) => a + b.count, 0) : null
-    const auditChecks: { name: string; value: string; pass: boolean }[] = [
+    const auditChecks: AuditCheck[] = [
         {
             name: 'FAHP Weights Sum = 1.00',
             value: fmt2(weightSum),
@@ -250,8 +168,8 @@ export default function ResultsPage() {
         },
         {
             name: 'Fase Kritis LCM dalam 1–4',
-            value: Object.values(lcmMap).every(l => l.phase === null || (['1','2','3','4'].includes(l.phase))) ? 'Semua valid' : 'Ada di luar range',
-            pass: Object.values(lcmMap).every(l => l.phase === null || (['1','2','3','4'].includes(l.phase))),
+            value: Object.values(lcmMap).every(l => l.phase === null || (['1', '2', '3', '4'].includes(l.phase))) ? 'Semua valid' : 'Ada di luar range',
+            pass: Object.values(lcmMap).every(l => l.phase === null || (['1', '2', '3', '4'].includes(l.phase))),
         },
         {
             name: 'Distribusi Fase Sum = 6',
@@ -301,16 +219,12 @@ export default function ResultsPage() {
             <header className="header">
                 <div className="header-content">
                     <div className="logo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="32" height="32">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                            <path d="M2 17l10 5 10-5" />
-                            <path d="M2 12l10 5 10-5" />
-                        </svg>
+                        <Layers width={32} height={32} />
                         <span>Hasil Survey - {survey.respondentName}</span>
                     </div>
                     {isAdmin && (
                         <Link href="/admin" className="btn btn-sm btn-outline" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.5)' }}>
-                            ← Admin Dashboard
+                            <ChevronLeft size={16} /> Admin Dashboard
                         </Link>
                     )}
                 </div>
@@ -318,14 +232,20 @@ export default function ResultsPage() {
 
             <main className="main">
                 <div className="card">
-                    <h2 className="card-title">📊 Hasil Analisis & Rekomendasi</h2>
+                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <BarChart2 size={22} /> Hasil Analisis &amp; Rekomendasi
+                    </h2>
                     <p className="card-subtitle">Berdasarkan jawaban Anda, berikut hasil analisis alokasi risiko KPBU SPAM.</p>
 
                     {/* KPI Grid — 10 cards (BL-04) */}
                     <div className="kpi-grid">
                         <div className={`kpi-card ${r.fahp.CRPass ? 'success' : 'warning'}`}>
                             <div className="kpi-value">{(r.fahp.CR * 100).toFixed(1)}%</div>
-                            <div className="kpi-label">CR {r.fahp.CRPass ? '✓ Lolos' : '⚠ Review'}</div>
+                            <div className="kpi-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                {r.fahp.CRPass
+                                    ? <><CheckCircle size={14} color="#059669" /> Lolos CR</>
+                                    : <><AlertTriangle size={14} color="#d97706" /> Perlu Review</>}
+                            </div>
                         </div>
                         <div className="kpi-card">
                             <div className="kpi-value">{topRisk.code}</div>
@@ -684,7 +604,9 @@ export default function ResultsPage() {
 
                                         {isGovLead && a.tier2.mitigationControls && a.tier2.mitigationControls.length > 0 && (
                                             <div style={{ marginBottom: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%)', borderRadius: '8px', borderLeft: '4px solid #4caf50' }}>
-                                                <strong style={{ color: '#2e7d32' }}>🛠️ Mitigation Controls untuk EPC/O&M:</strong>
+                                                <strong style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <Wrench size={15} /> Mitigation Controls untuk EPC/O&amp;M:
+                                                </strong>
                                                 <ul style={{ margin: '0.5rem 0 0 1rem', fontSize: '0.85rem' }}>
                                                     {a.tier2.mitigationControls.map((m, idx) => <li key={idx} style={{ margin: '0.25rem 0' }}>{m}</li>)}
                                                 </ul>
@@ -692,7 +614,11 @@ export default function ResultsPage() {
                                         )}
 
                                         <div style={{ marginBottom: '1rem' }}>
-                                            <strong>{isGovLead ? '⚠️ Governance Locks (Risiko Ditahan Publik):' : '🔒 Governance Locks:'}</strong>
+                                            <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                {isGovLead
+                                                    ? <><AlertTriangle size={15} color="#e65100" /> Governance Locks (Risiko Ditahan Publik):</>
+                                                    : <><Lock size={15} /> Governance Locks:</>}
+                                            </strong>
                                             <ul className="locks-list" style={{ marginTop: '0.5rem' }}>
                                                 {locks.map((l, idx) => <li key={idx}>{l}</li>)}
                                             </ul>
@@ -710,8 +636,8 @@ export default function ResultsPage() {
                     {/* BL-07: AUDIT_Checks — 13 Integrity Tests */}
                     <div className="section-divider" />
                     <div>
-                        <h3 className="section-title">
-                            🔍 Audit Kelengkapan & Konsistensi
+                        <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Search size={18} /> Audit Kelengkapan &amp; Konsistensi
                             <span style={{ marginLeft: '0.75rem', fontSize: '0.85rem', fontWeight: 'normal', color: auditPassCount === 13 ? '#059669' : '#d97706' }}>
                                 {auditPassCount}/13 lulus
                             </span>
@@ -730,7 +656,9 @@ export default function ResultsPage() {
                                         <td>{c.name}</td>
                                         <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{c.value}</td>
                                         <td style={{ textAlign: 'center', fontWeight: 'bold', color: c.pass ? '#059669' : '#dc2626' }}>
-                                            {c.pass ? '✓ LULUS' : '✗ GAGAL'}
+                                            {c.pass
+                                                ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><CheckCircle size={14} /> LULUS</span>
+                                                : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><XCircle size={14} /> GAGAL</span>}
                                         </td>
                                     </tr>
                                 ))}
@@ -740,22 +668,26 @@ export default function ResultsPage() {
 
                     {/* Export Buttons */}
                     <div className="export-buttons">
-                        <button className="btn btn-primary" onClick={downloadJSON}>
-                            📥 Unduh JSON
+                        <button className="btn btn-primary" onClick={downloadJSON} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Download size={16} /> Unduh JSON
                         </button>
-                        <button className="btn btn-secondary" onClick={downloadCSV}>
-                            📄 Unduh CSV
+                        <button className="btn btn-secondary" onClick={downloadCSV} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <FileText size={16} /> Unduh CSV
                         </button>
-                        <button className="btn btn-outline" onClick={() => window.print()}>
-                            🖨️ Cetak
+                        <button className="btn btn-outline" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Printer size={16} /> Cetak
                         </button>
                     </div>
 
                     <div className="btn-group">
                         {isAdmin ? (
-                            <Link href="/admin" className="btn btn-secondary">← Kembali ke Admin Dashboard</Link>
+                            <Link href="/admin" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <ChevronLeft size={16} /> Kembali ke Admin Dashboard
+                            </Link>
                         ) : (
-                            <Link href="/" className="btn btn-secondary">🏠 Kembali ke Beranda</Link>
+                            <Link href="/" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Home size={16} /> Kembali ke Beranda
+                            </Link>
                         )}
                     </div>
                 </div>

@@ -7,6 +7,7 @@ import {
     ROLE_OPTIONS, EXPERIENCE_OPTIONS, PROJECT_STATUS_OPTIONS,
     FAHP_SCALE
 } from '@/lib/constants'
+import { BarChart2, AlertTriangle, ChevronLeft, CheckCircle, XCircle, ClipboardList } from '@/lib/icons'
 
 // Survey state type
 interface SurveyState {
@@ -404,7 +405,9 @@ export default function SurveyPage() {
                             ))}
                         </div>
                         <div className="card">
-                            <h2 className="card-title">📊 FAHP: Perbandingan Berpasangan</h2>
+                            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <BarChart2 size={20} /> FAHP: Perbandingan Berpasangan
+                            </h2>
                             <p className="card-subtitle">Bandingkan tingkat kepentingan relatif antar risiko.</p>
                             <div className="alert alert-info"><strong>Skala:</strong> SI=Sama | SLI=Sedikit Lebih | LI=Lebih | SVI=Sangat Lebih | EI=Ekstrem Lebih Penting</div>
                             <div className={`completeness ${fahpCount === 15 ? 'complete' : 'incomplete'}`}>
@@ -437,7 +440,9 @@ export default function SurveyPage() {
                             </div>
                             {!isFahpValid && (
                                 <div className="alert alert-danger" style={{ marginTop: '1rem' }}>
-                                    <strong>⚠️ Perlu diisi lengkap!</strong><br />
+                                    <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <AlertTriangle size={14} /> Perlu diisi lengkap!
+                                    </strong><br />
                                     Anda baru mengisi <strong>{fahpCount}</strong> dari <strong>15</strong> perbandingan.<br />
                                     Semua 15 pasangan harus diisi agar perhitungan bobot FAHP valid. Data yang tidak lengkap akan menghasilkan Consistency Ratio (CR) yang tidak akurat.
                                 </div>
@@ -513,7 +518,9 @@ export default function SurveyPage() {
                         </div>
                         {!isLcmValid && (
                             <div className="alert alert-danger" style={{ marginTop: '1rem' }}>
-                                <strong>⚠️ Perlu diisi lengkap!</strong><br />
+                                <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <AlertTriangle size={14} /> Perlu diisi lengkap!
+                                </strong><br />
                                 Keterjadian: <strong>{lcmExpCount}</strong>/6 | Fase Kritis: <strong>{lcmPhaseCount}</strong>/6<br />
                                 Semua 6 risiko harus dinilai untuk kedua tabel. Data fase kritis sangat penting untuk menentukan alokasi risiko yang tepat.
                             </div>
@@ -670,13 +677,17 @@ export default function SurveyPage() {
 
                 return (
                     <div className="card">
-                        <h2 className="card-title">📝 Review & Submit</h2>
+                        <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <ClipboardList size={20} /> Review &amp; Submit
+                        </h2>
                         <p className="card-subtitle">Periksa kembali jawaban Anda sebelum mengirim.</p>
 
                         <ul className="validation-list">
                             {validations.map(v => (
                                 <li key={v.label} className={v.valid ? 'valid' : 'invalid'}>
-                                    {v.valid ? '✓' : '✗'} {v.label}
+                                    {v.valid
+                                        ? <><CheckCircle size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> {v.label}</>
+                                        : <><XCircle size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> {v.label}</>}
                                 </li>
                             ))}
                         </ul>
