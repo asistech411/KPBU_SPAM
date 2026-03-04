@@ -9,7 +9,7 @@
  * Backward-compat: checked if value === p.value OR === p.label
  */
 import { RISKS, PHASES } from '@/lib/constants'
-import { AlertTriangle } from '@/lib/icons'
+import { AlertTriangle, Activity, ChevronLeft } from '@/lib/icons'
 import type { SurveyState } from '@/lib/types'
 
 type Props = {
@@ -30,7 +30,7 @@ export default function StepLCM({
 }: Props) {
     return (
         <div className="card">
-            <h2 className="card-title">📈 Lifecycle Mapping</h2>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={20} /> Lifecycle Mapping</h2>
             <p className="card-subtitle">Penilaian keterjadian risiko dan fase paling kritis.</p>
 
             <h3 style={{ margin: '1.5rem 0 1rem', fontSize: '1.1rem' }}>LCM-01. Skor Keterjadian (1–5)</h3>
@@ -87,7 +87,7 @@ export default function StepLCM({
             </div>
 
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev}>← Kembali</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ChevronLeft size={16} /> Kembali</button>
                 <button className="btn btn-primary" onClick={onNext} disabled={!isLcmValid}>Lanjutkan →</button>
             </div>
             {!isLcmValid && (

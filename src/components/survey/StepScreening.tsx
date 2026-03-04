@@ -10,6 +10,7 @@
  */
 import { PHASES, ROLE_OPTIONS, EXPERIENCE_OPTIONS } from '@/lib/constants'
 import type { SurveyState } from '@/lib/types'
+import { Users, ChevronLeft } from '@/lib/icons'
 
 type Props = {
     data: Pick<SurveyState, 'screening01' | 'role' | 'experience' | 'phases' | 'dualRole'>
@@ -23,7 +24,9 @@ type Props = {
 export default function StepScreening({ data, isValid, onUpdateField, onTogglePhase, onNext, onPrev }: Props) {
     return (
         <div className="card">
-            <h2 className="card-title">👥 Screening Responden</h2>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Users size={20} /> Screening Responden
+            </h2>
             <p className="card-subtitle">Informasi latar belakang dan pengalaman Anda.</p>
 
             <div className="form-group">
@@ -90,7 +93,9 @@ export default function StepScreening({ data, isValid, onUpdateField, onTogglePh
             )}
 
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev}>← Kembali</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ChevronLeft size={16} /> Kembali
+                </button>
                 <button className="btn btn-primary" onClick={onNext} disabled={!isValid}>Lanjutkan →</button>
             </div>
             {!isValid && data.screening01 === 'Ya' && (

@@ -8,7 +8,7 @@
  * Submit memanggil /api/calculate → redirects ke /results/[id].
  */
 import { RISKS } from '@/lib/constants'
-import { CheckCircle, XCircle, ClipboardList } from '@/lib/icons'
+import { CheckCircle, XCircle, ClipboardList, ChevronLeft, Rocket } from '@/lib/icons'
 import type { SurveyState } from '@/lib/types'
 
 type Props = {
@@ -102,9 +102,11 @@ export default function StepReview({ data, fahpCount, lcmExpCount, lcmPhaseCount
             </div>
 
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev}>← Kembali</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ChevronLeft size={16} /> Kembali
+                </button>
                 <button className="btn btn-accent btn-lg" onClick={onSubmit} disabled={saving || !data.respondentName}>
-                    {saving ? 'Menyimpan...' : '🚀 Submit & Lihat Hasil'}
+                    {saving ? 'Menyimpan...' : <><Rocket size={16} /> Submit &amp; Lihat Hasil</>}
                 </button>
             </div>
         </div>

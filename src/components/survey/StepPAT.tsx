@@ -8,6 +8,7 @@
  * reverse items ditandai * pada Tier-1 (Externality, sesuai CALC_PAT Excel).
  */
 import { RISKS } from '@/lib/constants'
+import { ClipboardList, Wrench, ChevronLeft } from '@/lib/icons'
 import type { SurveyState } from '@/lib/types'
 
 type PATItem = {
@@ -35,7 +36,7 @@ export default function StepPAT({ tier, items, patData, activeTab, onTabChange, 
 
     return (
         <div className="card">
-            <h2 className="card-title">{tier === 1 ? '👥' : '🔧'} PAT Tier-{tier}: {tierLabel}</h2>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{tier === 1 ? <ClipboardList size={20} /> : <Wrench size={20} />} PAT Tier-{tier}: {tierLabel}</h2>
             <p className="card-subtitle">Penilaian konstruk Principal-Agent Theory.</p>
             <div className="alert alert-info">
                 <span className={`tier-badge ${tierBadge}`}>Tier-{tier}</span> <strong>{itemCount} item per risiko</strong> — Skala: 1–5, TT=Tidak tahu
@@ -101,7 +102,7 @@ export default function StepPAT({ tier, items, patData, activeTab, onTabChange, 
             </div>
 
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev}>← Kembali</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ChevronLeft size={16} /> Kembali</button>
                 <button className="btn btn-primary" onClick={onNext}>{nextLabel}</button>
             </div>
         </div>

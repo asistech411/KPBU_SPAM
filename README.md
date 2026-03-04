@@ -90,7 +90,7 @@ Buka http://localhost:3000
 │   │   ├── admin/           # Admin pages
 │   │   ├── api/             # API routes
 │   │   ├── results/[id]/    # Results page (323 baris, -58%)
-│   │   ├── survey/          # Survey wizard (160 baris, -80%)
+│   │   ├── survey/          # Survey wizard (349 baris, -56%)
 │   │   └── page.tsx         # Landing page
 │   ├── components/
 │   │   ├── results/         # 9 komponen hasil (KPIGrid, FAHPDetailTable, dll)

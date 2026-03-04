@@ -10,6 +10,7 @@
  */
 import { PHASES, PROJECT_STATUS_OPTIONS } from '@/lib/constants'
 import type { SurveyState } from '@/lib/types'
+import { FileText, ChevronLeft } from '@/lib/icons'
 
 type Props = {
     data: Pick<SurveyState, 'projectType' | 'projectLocation' | 'projectPayment' | 'projectStatus' | 'projectPhase'>
@@ -22,7 +23,7 @@ type Props = {
 export default function StepProjectRef({ data, isValid, onUpdateField, onNext, onPrev }: Props) {
     return (
         <div className="card">
-            <h2 className="card-title">📁 Proyek Referensi Utama</h2>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={20} /> Proyek Referensi Utama</h2>
             <p className="card-subtitle">Pilih 1 proyek yang paling Anda pahami. Jawab semua pertanyaan dengan konteks proyek ini.</p>
             <div className="alert alert-info">Tidak perlu menyebutkan nama proyek/lembaga untuk menjaga kerahasiaan.</div>
 
@@ -72,7 +73,7 @@ export default function StepProjectRef({ data, isValid, onUpdateField, onNext, o
             </div>
 
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev}>← Kembali</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ChevronLeft size={16} /> Kembali</button>
                 <button className="btn btn-primary" onClick={onNext} disabled={!isValid}>Lanjutkan →</button>
             </div>
             {!isValid && (

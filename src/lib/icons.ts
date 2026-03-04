@@ -22,4 +22,7 @@ export {
     Layers,           // Header logo (survey app layers metaphor)
     ClipboardList,    // PAT / Survey items
     Activity,         // LCM / Lifecycle exposure
+    Users,            // Screening responden
+    Info,             // Informasi / definisi
+    Rocket,           // Submit / launch action
 } from 'lucide-react'

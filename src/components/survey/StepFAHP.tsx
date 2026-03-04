@@ -9,7 +9,7 @@
  * Warning jika belum lengkap — CR tidak bisa dihitung.
  */
 import { RISKS, FAHP_SCALE } from '@/lib/constants'
-import { BarChart2, AlertTriangle } from '@/lib/icons'
+import { BarChart2, AlertTriangle, Info, ChevronLeft } from '@/lib/icons'
 import type { SurveyState } from '@/lib/types'
 
 type FAHPPair = { r1: typeof RISKS[number]; r2: typeof RISKS[number] }
@@ -28,7 +28,9 @@ export default function StepFAHP({ fahpPairwise, fahpPairs, fahpCount, isFahpVal
     return (
         <>
             <div className="risk-sidebar">
-                <h3>ℹ️ Definisi 6 Risiko</h3>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Info size={16} /> Definisi 6 Risiko
+                </h3>
                 {RISKS.map(r => (
                     <div key={r.code} className="risk-item">
                         <strong>{r.code} {r.name}</strong>
@@ -70,7 +72,9 @@ export default function StepFAHP({ fahpPairwise, fahpPairs, fahpCount, isFahpVal
                     })}
                 </div>
                 <div className="btn-group">
-                    <button className="btn btn-secondary" onClick={onPrev}>← Kembali</button>
+                    <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <ChevronLeft size={16} /> Kembali
+                    </button>
                     <button className="btn btn-primary" onClick={onNext} disabled={!isFahpValid}>Lanjutkan →</button>
                 </div>
                 {!isFahpValid && (

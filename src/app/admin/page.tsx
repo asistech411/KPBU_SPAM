@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ClipboardList, Home } from '@/lib/icons'
 
 interface SurveyItem {
     id: string
@@ -97,7 +98,9 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="card">
-                    <h2 className="card-title">📋 Daftar Responses</h2>
+                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ClipboardList size={20} /> Daftar Responses
+                    </h2>
                     <p className="card-subtitle">Klik untuk melihat detail hasil survey.</p>
 
                     {loading ? (
@@ -147,7 +150,9 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="btn-group">
-                    <Link href="/" className="btn btn-secondary">🏠 Kembali ke Beranda</Link>
+                    <Link href="/" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Home size={16} /> Kembali ke Beranda
+                    </Link>
                 </div>
             </main>
         </>

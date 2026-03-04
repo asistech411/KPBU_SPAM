@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Layers, ClipboardList } from '@/lib/icons'
 
 export default function HomePage() {
     return (
@@ -25,7 +26,9 @@ export default function HomePage() {
 
             <main className="main">
                 <div className="landing-hero">
-                    <h1>🌊 Survey Alokasi Risiko Proyek KPBU SPAM</h1>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                        <Layers size={24} /> Survey Alokasi Risiko Proyek KPBU SPAM
+                    </h1>
                     <p>Selamat datang! Survey ini mengumpulkan persepsi Anda tentang kepentingan risiko, fase kritis, dan indikator untuk rekomendasi alokasi risiko yang adil pada proyek KPBU SPAM.</p>
                     <div className="time-estimate">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -70,7 +73,9 @@ export default function HomePage() {
                 </div>
 
                 <div className="card" style={{ marginTop: '2rem' }}>
-                    <h3 style={{ marginBottom: '1rem' }}>📋 Struktur Survey</h3>
+                    <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ClipboardList size={18} /> Struktur Survey
+                    </h3>
                     <ol style={{ paddingLeft: '1.5rem', lineHeight: 2 }}>
                         <li>Persetujuan partisipasi</li>
                         <li>Screening responden & pengalaman</li>

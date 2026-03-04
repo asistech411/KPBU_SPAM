@@ -5,6 +5,7 @@
  * dan checkbox persetujuan responden.
  */
 import type { SurveyState } from '@/lib/types'
+import { ClipboardList, ChevronLeft } from '@/lib/icons'
 
 type Props = {
     consent: SurveyState['consent']
@@ -16,7 +17,9 @@ type Props = {
 export default function StepConsent({ consent, onConsentChange, onNext, onPrev }: Props) {
     return (
         <div className="card">
-            <h2 className="card-title">📋 Lembar Informasi &amp; Persetujuan</h2>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ClipboardList size={20} /> Lembar Informasi &amp; Persetujuan
+            </h2>
             <p className="card-subtitle">Silakan baca informasi berikut sebelum melanjutkan.</p>
             <div className="alert alert-info"><strong>Tujuan:</strong> Mengumpulkan persepsi tentang 6 risiko utama, fase kritis, dan indikator PAT untuk rekomendasi alokasi risiko.</div>
             <div className="alert alert-success"><strong>Kerahasiaan:</strong> Jawaban rahasia, hasil disajikan agregat tanpa menyebut nama.</div>
@@ -32,7 +35,9 @@ export default function StepConsent({ consent, onConsentChange, onNext, onPrev }
                 </label>
             </div>
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev}>← Kembali</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ChevronLeft size={16} /> Kembali
+                </button>
                 <button className="btn btn-primary" onClick={onNext} disabled={!consent}>Lanjutkan →</button>
             </div>
         </div>
