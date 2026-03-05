@@ -16,6 +16,7 @@ import LCMHeatmap from '@/components/results/LCMHeatmap'
 import AllocationMatrix from '@/components/results/AllocationMatrix'
 import RiskAccordion from '@/components/results/RiskAccordion'
 import OutputSummaryCard from '@/components/results/OutputSummaryCard'
+import AuditTraceTable from '@/components/results/AuditTraceTable'
 import { BarChart2, Home, ChevronLeft, Layers } from '@/lib/icons'
 
 // --- Component ---
@@ -296,6 +297,10 @@ export default function ResultsPage() {
                     {/* BL-07: AUDIT_Checks — 13 Integrity Tests */}
                     <div className="section-divider" />
                     <AuditChecksTable checks={auditChecks} passCount={auditPassCount} />
+
+                    {/* BL-09: AUDIT_Trace — KPI Lineage Map */}
+                    <div className="section-divider" />
+                    <AuditTraceTable />
 
                     {/* Export Buttons */}
                     <ExportButtons

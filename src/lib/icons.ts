@@ -25,4 +25,5 @@ export {
     Users,            // Screening responden
     Info,             // Informasi / definisi
     Rocket,           // Submit / launch action
+    GitBranch,        // Audit Trace / KPI lineage map
 } from 'lucide-react'
