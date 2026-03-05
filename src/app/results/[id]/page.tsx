@@ -208,8 +208,8 @@ export default function ResultsPage() {
         },
         {
             name: 'Persentase Bobot Sum ≈ 100%',
-            value: fmtPct(weightSum * 100),
-            pass: Math.abs(weightSum * 100 - 100) < 0.1,
+            value: fmtPct(weightSum),
+            pass: Math.abs(weightSum - 1) < 0.001,
         },
         {
             name: 'Kelengkapan Input (Bobot + LCM + PAT)',
