@@ -11,12 +11,14 @@
 import { RISKS } from '@/lib/constants'
 import { fmtPct } from '@/lib/utils'
 import type { FAHPResult } from '@/lib/types'
+import { useLang } from '@/lib/lang-context'
 
 type Props = {
     fahp: FAHPResult
 }
 
 export default function FAHPDetailTable({ fahp }: Props) {
+    const { t } = useLang()
     // Rank: urutkan index berdasar weight descending
     const ranked = [...fahp.weights]
         .map((w, i) => ({ i, w }))
@@ -33,14 +35,14 @@ export default function FAHPDetailTable({ fahp }: Props) {
         { label: 'CI', value: fahp.lambdaMax != null ? (((fahp.lambdaMax - 6) / 5)).toFixed(4) : '-', note: '(λmax−n)/(n−1)' },
         { label: 'RI (n=6)', value: '1.24', note: 'Saaty table' },
         { label: 'CR', value: fahp.CR.toFixed(4), note: 'CI / RI', highlight: true },
-        { label: 'Status', value: fahp.CRPass ? '✓ KONSISTEN' : '⚠ TIDAK KONSISTEN', note: 'threshold < 0.10', pass: fahp.CRPass },
+        { label: 'Status', value: fahp.CRPass ? `✓ ${t.consistent}` : `⚠ ${t.inconsistent}`, note: 'threshold < 0.10', pass: fahp.CRPass },
     ]
 
     return (
         <div className="chart-container">
-            <div className="chart-title">Detail Perhitungan FAHP</div>
+            <div className="chart-title">{t.fahpDetailTitle}</div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
-                Sesuai CALC_FAHP sheet Excel — Step 2: Geometric Mean → Step 3: Bobot → Step 4: CR Check
+                {t.fahpDetailSubtitle}
             </p>
 
             {/* Step 2 + 3 combined table */}

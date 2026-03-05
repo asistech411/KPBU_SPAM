@@ -6,6 +6,7 @@
  * Titik (●) menandai fase kritis yang dipilih responden.
  */
 import { RISKS, PHASES } from '@/lib/constants'
+import { useLang } from '@/lib/lang-context'
 import type { LCMMapping } from '@/lib/types'
 
 type Props = {
@@ -13,9 +14,10 @@ type Props = {
 }
 
 export default function LCMHeatmap({ lcmMap }: Props) {
+    const { t } = useLang()
     return (
         <div className="chart-container">
-            <div className="chart-title">Lifecycle Mapping: Keterjadian &amp; Fase Kritis</div>
+            <div className="chart-title">{t.lcmHeatmapTitle}</div>
             <div className="heatmap">
                 <div className="heatmap-header"></div>
                 {PHASES.map(p => <div key={p.value} className="heatmap-header">{p.label}</div>)}

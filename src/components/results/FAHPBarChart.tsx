@@ -6,6 +6,7 @@
  */
 import { RISKS } from '@/lib/constants'
 import { fmtPct } from '@/lib/utils'
+import { useLang } from '@/lib/lang-context'
 import type { FAHPResult } from '@/lib/types'
 
 type Props = {
@@ -13,9 +14,10 @@ type Props = {
 }
 
 export default function FAHPBarChart({ fahp }: Props) {
+    const { t } = useLang()
     return (
         <div className="chart-container">
-            <div className="chart-title">Bobot FAHP 6 Risiko</div>
+            <div className="chart-title">{t.fahpBarTitle}</div>
             <div className="bar-chart">
                 {RISKS.map((ri, i) => (
                     <div key={ri.code} className="bar-item">

@@ -8,6 +8,7 @@
  */
 import { RISKS } from '@/lib/constants'
 import { fmtPct } from '@/lib/utils'
+import { useLang } from '@/lib/lang-context'
 import type { Results, LCMMapping } from '@/lib/types'
 
 type Props = {
@@ -18,16 +19,17 @@ type Props = {
 }
 
 export default function AllocationMatrix({ fahpWeights, allocations, confidence, lcmMap }: Props) {
+    const { t } = useLang()
     return (
         <div className="chart-container">
-            <div className="chart-title">Matriks Alokasi Risiko 2-Tier</div>
+            <div className="chart-title">{t.allocMatrixTitle}</div>
             <div style={{ overflowX: 'auto' }}>
                 <table className="allocation-matrix">
                     <thead>
                         <tr>
-                            <th>Risiko</th>
-                            <th>Bobot</th>
-                            <th>Fase</th>
+                            <th>{t.colRisk}</th>
+                            <th>{t.colWeight}</th>
+                            <th>{t.colPhase}</th>
                             <th>Tier-1</th>
                             <th>Tier-2</th>
                             <th>Conf</th>
@@ -56,7 +58,7 @@ export default function AllocationMatrix({ fahpWeights, allocations, confidence,
                     <tfoot>
                         <tr>
                             <td colSpan={6} style={{ fontSize: '0.8rem', color: 'var(--text-light)', textAlign: 'left', paddingTop: '1rem' }}>
-                                * N/A = Tier-2 tidak diterapkan. Untuk risiko dengan Government/PDAM-lead, tidak ada transfer risiko ke EPC/O&M.
+                                {t.allocMatrixNote}
                             </td>
                         </tr>
                     </tfoot>

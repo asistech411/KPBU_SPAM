@@ -10,6 +10,7 @@
  */
 import { RISKS } from '@/lib/constants'
 import { fmtPct, fmt2 } from '@/lib/utils'
+import { useLang } from '@/lib/lang-context'
 import { Lock, AlertTriangle, Wrench } from '@/lib/icons'
 import type { Results, LCMMapping } from '@/lib/types'
 
@@ -36,9 +37,10 @@ export default function RiskAccordion({
     openAccordions,
     toggleAccordion,
 }: Props) {
+    const { t } = useLang()
     return (
         <>
-            <h3 style={{ margin: '2rem 0 1rem' }}>Detail per Risiko</h3>
+            <h3 style={{ margin: '2rem 0 1rem' }}>{t.riskDetailTitle}</h3>
             <div className="accordion">
                 {RISKS.map((ri, i) => {
                     const a = allocations[ri.code]
@@ -65,10 +67,10 @@ export default function RiskAccordion({
                             <div className={`accordion-content ${isOpen ? 'active' : ''}`}>
                                 {/* Ringkasan metrik per risiko */}
                                 <div style={{ marginBottom: '1rem' }}>
-                                    <strong>Bobot:</strong> {fmtPct(fahpWeights[i])} |
+                                    <strong>{t.riskWeightLabel}:</strong> {fmtPct(fahpWeights[i])} |
                                     {fahpGeoMeans && <><strong> GM:</strong> {fahpGeoMeans[i].toFixed(4)} |</>}
-                                    <strong> Keterjadian:</strong> {lcmMap[ri.code]?.exposure || '-'}/5 |
-                                    <strong> Fase:</strong> {lcmMap[ri.code]?.phase || '-'} |
+                                    <strong> {t.riskExposureLabel}:</strong> {lcmMap[ri.code]?.exposure || '-'}/5 |
+                                    <strong> {t.riskPhaseLabel}:</strong> {lcmMap[ri.code]?.phase || '-'} |
                                     <strong> PAT1:</strong> {fmt2(t1Score)} |
                                     <strong> PAT2:</strong> {fmt2(t2Score)}
                                 </div>
@@ -77,7 +79,7 @@ export default function RiskAccordion({
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                                     <div style={{ padding: '1rem', background: isGovLead ? '#fff3e0' : '#e3f2fd', borderRadius: '8px', border: isGovLead ? '2px solid #ff9800' : 'none' }}>
                                         <strong style={{ color: isGovLead ? '#e65100' : '#1565c0' }}>Tier-1: {a.tier1.allocation}</strong>
-                                        {isGovLead && <span style={{ marginLeft: '0.5rem', padding: '2px 8px', background: '#ff9800', color: '#fff', borderRadius: '4px', fontSize: '0.7rem' }}>RISIKO DITAHAN</span>}
+                                        {isGovLead && <span style={{ marginLeft: '0.5rem', padding: '2px 8px', background: '#ff9800', color: '#fff', borderRadius: '4px', fontSize: '0.7rem' }}>{t.riskRetained}</span>}
                                         <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{a.tier1.reason}</p>
                                     </div>
                                     <div style={{ padding: '1rem', background: isGovLead ? '#f5f5f5' : '#f3e5f5', borderRadius: '8px' }}>
@@ -90,7 +92,7 @@ export default function RiskAccordion({
                                 {isGovLead && a.tier2.mitigationControls && a.tier2.mitigationControls.length > 0 && (
                                     <div style={{ marginBottom: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%)', borderRadius: '8px', borderLeft: '4px solid #4caf50' }}>
                                         <strong style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <Wrench size={15} /> Mitigation Controls untuk EPC/O&amp;M:
+                                            <Wrench size={15} /> {t.mitigationTitle}
                                         </strong>
                                         <ul style={{ margin: '0.5rem 0 0 1rem', fontSize: '0.85rem' }}>
                                             {a.tier2.mitigationControls.map((m, idx) => <li key={idx} style={{ margin: '0.25rem 0' }}>{m}</li>)}
@@ -102,8 +104,8 @@ export default function RiskAccordion({
                                 <div style={{ marginBottom: '1rem' }}>
                                     <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         {isGovLead
-                                            ? <><AlertTriangle size={15} color="#e65100" /> Governance Locks (Risiko Ditahan Publik):</>
-                                            : <><Lock size={15} /> Governance Locks:</>}
+                                            ? <><AlertTriangle size={15} color="#e65100" /> {t.govLocksPublic}</>
+                                            : <><Lock size={15} /> {t.govLocksLabel}</>}
                                     </strong>
                                     <ul className="locks-list" style={{ marginTop: '0.5rem' }}>
                                         {locks.map((l, idx) => <li key={idx}>{l}</li>)}
@@ -112,7 +114,7 @@ export default function RiskAccordion({
 
                                 {/* Confidence */}
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                                    <strong>Confidence:</strong> {c.level} — {c.reason}
+                                    <strong>{t.confidenceLabel}:</strong> {c.level} — {c.reason}
                                 </div>
                             </div>
                         </div>

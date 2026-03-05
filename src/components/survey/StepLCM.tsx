@@ -11,6 +11,7 @@
 import { RISKS, PHASES } from '@/lib/constants'
 import { AlertTriangle, Activity, ChevronLeft } from '@/lib/icons'
 import type { SurveyState } from '@/lib/types'
+import { useLang } from '@/lib/lang-context'
 
 type Props = {
     lcmExposure: SurveyState['lcmExposure']
@@ -28,16 +29,17 @@ export default function StepLCM({
     lcmExposure, lcmPhaseCritical, lcmExpCount, lcmPhaseCount,
     isLcmValid, onUpdateLcmExposure, onUpdateLcmPhase, onNext, onPrev,
 }: Props) {
+    const { t } = useLang()
     return (
         <div className="card">
-            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={20} /> Lifecycle Mapping</h2>
-            <p className="card-subtitle">Penilaian keterjadian risiko dan fase paling kritis.</p>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={20} /> {t.lcmTitle}</h2>
+            <p className="card-subtitle">{t.lcmSubtitle}</p>
 
-            <h3 style={{ margin: '1.5rem 0 1rem', fontSize: '1.1rem' }}>LCM-01. Skor Keterjadian (1–5)</h3>
+            <h3 style={{ margin: '1.5rem 0 1rem', fontSize: '1.1rem' }}>{t.lcm01Title}</h3>
             <div className="alert alert-info" style={{ marginBottom: '1rem' }}>
                 <strong>Skala Keterjadian:</strong><br />
                 <span style={{ marginTop: '0.5rem', display: 'inline-block' }}>
-                    <strong>1</strong> = Sangat Jarang | <strong>2</strong> = Jarang | <strong>3</strong> = Kadang-kadang | <strong>4</strong> = Sering | <strong>5</strong> = Sangat Sering
+                    {t.lcmExposureHint}
                 </span>
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -60,11 +62,11 @@ export default function StepLCM({
                 </table>
             </div>
 
-            <h3 style={{ margin: '2rem 0 1rem', fontSize: '1.1rem' }}>LCM-02. Fase Paling Kritis (pilih 1 per risiko)</h3>
+            <h3 style={{ margin: '2rem 0 1rem', fontSize: '1.1rem' }}>{t.lcm02Title}</h3>
             <div style={{ overflowX: 'auto' }}>
                 <table className="likert-grid">
                     <thead>
-                        <tr><th>Risiko</th>{PHASES.map(p => <th key={p.value}>{p.label}</th>)}</tr>
+                        <tr><th>Risiko</th>{PHASES.map(p => <th key={p.value}>{t.phases[p.label] ?? p.label}</th>)}</tr>
                     </thead>
                     <tbody>
                         {RISKS.map(r => (
@@ -87,16 +89,16 @@ export default function StepLCM({
             </div>
 
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ChevronLeft size={16} /> Kembali</button>
-                <button className="btn btn-primary" onClick={onNext} disabled={!isLcmValid}>Lanjutkan →</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ChevronLeft size={16} /> {t.back}</button>
+                <button className="btn btn-primary" onClick={onNext} disabled={!isLcmValid}>{t.next} →</button>
             </div>
             {!isLcmValid && (
                 <div className="alert alert-danger" style={{ marginTop: '1rem' }}>
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <AlertTriangle size={14} /> Perlu diisi lengkap!
+                        <AlertTriangle size={14} /> {t.fahpWarningTitle}
                     </strong><br />
                     Keterjadian: <strong>{lcmExpCount}</strong>/6 | Fase Kritis: <strong>{lcmPhaseCount}</strong>/6<br />
-                    Semua 6 risiko harus dinilai untuk kedua tabel. Data fase kritis sangat penting untuk menentukan alokasi risiko yang tepat.
+                    {t.lcmWarning}
                 </div>
             )}
         </div>

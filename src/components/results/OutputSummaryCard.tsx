@@ -11,6 +11,7 @@
  */
 import { RISKS } from '@/lib/constants'
 import { fmt1, fmt2 } from '@/lib/utils'
+import { useLang } from '@/lib/lang-context'
 import type { LCMStats, Results } from '@/lib/types'
 
 type Props = {
@@ -25,21 +26,22 @@ type Props = {
 export default function OutputSummaryCard({
     lcmStats, pat, allocations, surveyPAT1, surveyPAT2, topRiskCode
 }: Props) {
+    const { t } = useLang()
     return (
         <div className="chart-container">
-            <div className="chart-title">Ringkasan Analisis</div>
+            <div className="chart-title">{t.outputSummaryTitle}</div>
 
             {/* LCM Exposure Summary */}
             {lcmStats && (
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>LCM — Statistik Keterjadian Risiko</p>
+                    <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>{t.lcmStatsTitle}</p>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
                         {[
-                            { label: 'Rata-rata', value: fmt1(lcmStats.avgExposure) },
-                            { label: 'Maksimum', value: lcmStats.maxExposure ?? '-' },
-                            { label: 'Minimum', value: lcmStats.minExposure ?? '-' },
-                            { label: 'Risiko Tinggi (≥4)', value: lcmStats.highRiskCount },
-                            { label: 'Risiko Rendah (≤2)', value: lcmStats.lowRiskCount },
+                            { label: t.lcmStatAvg, value: fmt1(lcmStats.avgExposure) },
+                            { label: t.lcmStatMax, value: lcmStats.maxExposure ?? '-' },
+                            { label: t.lcmStatMin, value: lcmStats.minExposure ?? '-' },
+                            { label: t.lcmStatHigh, value: lcmStats.highRiskCount },
+                            { label: t.lcmStatLow, value: lcmStats.lowRiskCount },
                         ].map(item => (
                             <div key={item.label} style={{ textAlign: 'center', padding: '0.75rem 1rem', background: 'var(--bg)', borderRadius: '8px', minWidth: '100px', flex: 1 }}>
                                 <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary)' }}>{item.value}</div>
@@ -50,7 +52,7 @@ export default function OutputSummaryCard({
 
                     {/* Phase Distribution */}
                     <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>
-                        Distribusi Fase Kritis &mdash; Dominan: <span style={{ color: 'var(--primary)' }}>{lcmStats.dominantPhase ?? '-'}</span>
+                        {t.lcmPhaseDist} &mdash; {t.lcmPhaseDominant}: <span style={{ color: 'var(--primary)' }}>{lcmStats.dominantPhase ?? '-'}</span>
                     </p>
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         {lcmStats.phaseDistribution.map(d => (
@@ -70,16 +72,16 @@ export default function OutputSummaryCard({
             )}
 
             {/* PAT Overall Summary table */}
-            <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>PAT — Skor Per Risiko</p>
+            <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>{t.patSummaryTitle}</p>
             <div style={{ overflowX: 'auto' }}>
                 <table className="allocation-matrix">
                     <thead>
                         <tr>
-                            <th>Risiko</th>
+                            <th>{t.colRisk}</th>
                             <th>PAT1 Score</th>
                             <th>PAT2 Score</th>
-                            <th>Alokasi T1</th>
-                            <th>Alokasi T2</th>
+                            <th>{t.colAllocT1}</th>
+                            <th>{t.colAllocT2}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -103,11 +105,11 @@ export default function OutputSummaryCard({
                     </tbody>
                     <tfoot>
                         <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)' }}>
-                            <td>Rata-rata Survey</td>
+                            <td>{t.surveyAvgLabel}</td>
                             <td>{fmt2(surveyPAT1)}</td>
                             <td>{fmt2(surveyPAT2)}</td>
                             <td colSpan={2} style={{ color: 'var(--text-light)', fontWeight: 400, fontSize: '0.8rem' }}>
-                                berdasarkan risiko tertinggi ({topRiskCode})
+                                {t.basedOnTopRisk} ({topRiskCode})
                             </td>
                         </tr>
                     </tfoot>

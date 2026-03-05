@@ -15,6 +15,8 @@ import StepFAHP from '@/components/survey/StepFAHP'
 import StepLCM from '@/components/survey/StepLCM'
 import StepPAT from '@/components/survey/StepPAT'
 import StepReview from '@/components/survey/StepReview'
+import LangToggle from '@/components/ui/LangToggle'
+import { useLang } from '@/lib/lang-context'
 
 
 const initialState: SurveyState = {
@@ -40,6 +42,7 @@ const initialState: SurveyState = {
 
 export default function SurveyPage() {
     const router = useRouter()
+    const { t } = useLang()
     const [currentPage, setCurrentPage] = useState(0)
     const [data, setData] = useState<SurveyState>(initialState)
     const [saving, setSaving] = useState(false)
@@ -315,22 +318,31 @@ export default function SurveyPage() {
                             <path d="M2 17l10 5 10-5" />
                             <path d="M2 12l10 5 10-5" />
                         </svg>
-                        <span>Survey Alokasi Risiko KPBU SPAM</span>
+                        <span>{t.surveyTitle}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        {saving && <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>Menyimpan...</span>}
+                        {saving && <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>{t.saving}</span>}
+                        <LangToggle />
                     </div>
                 </div>
             </header>
 
             <div className="stepper-container">
                 <div className="stepper">
-                    {STEPS.map((s, i) => (
-                        <div key={i} className={`step ${i === currentPage ? 'active' : ''} ${i < currentPage ? 'completed' : ''}`} onClick={() => goToPage(i)}>
-                            <div className="step-number">{i}</div>
-                            <div className="step-label">{s.label}</div>
-                        </div>
-                    ))}
+                    {STEPS.map((s, i) => {
+                        const stepKeys: Record<number, keyof typeof t> = {
+                            1: 'stepLabelConsent', 2: 'stepLabelScreening', 3: 'stepLabelProject',
+                            4: 'stepLabelFAHP', 5: 'stepLabelLCM', 6: 'stepLabelPAT1',
+                            7: 'stepLabelPAT2', 8: 'stepLabelReview',
+                        }
+                        const label = (stepKeys[s.path] ? t[stepKeys[s.path]] : s.label) as string
+                        return (
+                            <div key={i} className={`step ${i === currentPage ? 'active' : ''} ${i < currentPage ? 'completed' : ''}`} onClick={() => goToPage(i)}>
+                                <div className="step-number">{i}</div>
+                                <div className="step-label">{label}</div>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
 

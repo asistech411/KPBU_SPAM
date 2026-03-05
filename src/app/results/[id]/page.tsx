@@ -18,12 +18,15 @@ import RiskAccordion from '@/components/results/RiskAccordion'
 import OutputSummaryCard from '@/components/results/OutputSummaryCard'
 import AuditTraceTable from '@/components/results/AuditTraceTable'
 import { BarChart2, Home, ChevronLeft, Layers } from '@/lib/icons'
+import LangToggle from '@/components/ui/LangToggle'
+import { useLang } from '@/lib/lang-context'
 
 // --- Component ---
 
 export default function ResultsPage() {
     const params = useParams()
     const { data: session } = useSession()
+    const { t } = useLang()
     const [survey, setSurvey] = useState<Survey | null>(null)
     const [loading, setLoading] = useState(true)
     const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set())
@@ -233,15 +236,16 @@ export default function ResultsPage() {
                             <ChevronLeft size={16} /> Admin Dashboard
                         </Link>
                     )}
+                    <LangToggle />
                 </div>
             </header>
 
             <main className="main">
                 <div className="card">
                     <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <BarChart2 size={22} /> Hasil Analisis &amp; Rekomendasi
+                        <BarChart2 size={22} /> {t.resultsTitle}
                     </h2>
-                    <p className="card-subtitle">Berdasarkan jawaban Anda, berikut hasil analisis alokasi risiko KPBU SPAM.</p>
+                    <p className="card-subtitle">{t.resultsSubtitle}</p>
 
                     {/* KPI Grid — 10 cards (BL-04) */}
                     <KPIGrid
@@ -312,11 +316,11 @@ export default function ResultsPage() {
                     <div className="btn-group">
                         {isAdmin ? (
                             <Link href="/admin" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <ChevronLeft size={16} /> Kembali ke Admin Dashboard
+                                <ChevronLeft size={16} /> {t.backToDashboard}
                             </Link>
                         ) : (
                             <Link href="/" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Home size={16} /> Kembali ke Beranda
+                                <Home size={16} /> {t.back}
                             </Link>
                         )}
                     </div>

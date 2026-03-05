@@ -10,6 +10,7 @@
 import { RISKS } from '@/lib/constants'
 import { ClipboardList, Wrench, ChevronLeft } from '@/lib/icons'
 import type { SurveyState } from '@/lib/types'
+import { useLang } from '@/lib/lang-context'
 
 type PATItem = {
     code: string
@@ -29,23 +30,18 @@ type Props = {
     nextLabel?: string
 }
 
-export default function StepPAT({ tier, items, patData, activeTab, onTabChange, onUpdate, onNext, onPrev, nextLabel = 'Lanjutkan →' }: Props) {
-    const tierLabel = tier === 1 ? 'Publik/PDAM ↔ BU/SPV' : 'BU/SPV ↔ EPC/O&M'
+export default function StepPAT({ tier, items, patData, activeTab, onTabChange, onUpdate, onNext, onPrev, nextLabel }: Props) {
+    const { t } = useLang()
     const tierBadge = tier === 1 ? 'tier1' : 'tier2'
     const itemCount = items.length
+    const btnNextLabel = nextLabel ?? `${t.next} →`
 
     return (
         <div className="card">
-            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{tier === 1 ? <ClipboardList size={20} /> : <Wrench size={20} />} PAT Tier-{tier}: {tierLabel}</h2>
-            <p className="card-subtitle">Penilaian konstruk Principal-Agent Theory.</p>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{tier === 1 ? <ClipboardList size={20} /> : <Wrench size={20} />} {t.patTitle(tier)}</h2>
+            <p className="card-subtitle">{t.patSubtitle(tier)}</p>
             <div className="alert alert-info">
-                <span className={`tier-badge ${tierBadge}`}>Tier-{tier}</span> <strong>{itemCount} item per risiko</strong> — Skala: 1–5, TT=Tidak tahu
-            </div>
-            <div className="alert alert-warning" style={{ marginTop: '0.5rem' }}>
-                <strong>Skala Penilaian (1–5):</strong><br />
-                <span style={{ marginTop: '0.5rem', display: 'inline-block' }}>
-                    <strong>1</strong> = Sangat Tidak Setuju | <strong>2</strong> = Tidak Setuju | <strong>3</strong> = Netral | <strong>4</strong> = Setuju | <strong>5</strong> = Sangat Setuju | <strong>TT</strong> = Tidak Tahu
-                </span>
+                <span className={`tier-badge ${tierBadge}`}>Tier-{tier}</span> <strong>{itemCount} item per risiko</strong> — {t.patScaleHint}
             </div>
 
             <div className="tab-container">
@@ -102,8 +98,8 @@ export default function StepPAT({ tier, items, patData, activeTab, onTabChange, 
             </div>
 
             <div className="btn-group">
-                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ChevronLeft size={16} /> Kembali</button>
-                <button className="btn btn-primary" onClick={onNext}>{nextLabel}</button>
+                <button className="btn btn-secondary" onClick={onPrev} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ChevronLeft size={16} /> {t.back}</button>
+                <button className="btn btn-primary" onClick={onNext}>{btnNextLabel}</button>
             </div>
         </div>
     )

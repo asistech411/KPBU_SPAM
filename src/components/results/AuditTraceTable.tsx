@@ -1,4 +1,5 @@
 import { GitBranch } from '@/lib/icons'
+import { useLang } from '@/lib/lang-context'
 
 // BL-09: AUDIT Trace — KPI lineage map (sesuai AUDIT_Trace sheet Excel)
 // Static: lineage tidak berubah antar survey, hanya formula/sumber yang sama
@@ -77,22 +78,23 @@ const TRACE_ROWS = [
 ]
 
 export default function AuditTraceTable() {
+    const { t } = useLang()
     return (
         <div>
             <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <GitBranch size={18} /> Audit Trace — KPI Lineage
+                <GitBranch size={18} /> {t.auditTraceTitle}
             </h3>
             <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.75rem' }}>
-                Peta asal-usul setiap KPI: dari input survey → fungsi kalkulasi → dashboard.
+                {t.auditTraceSubtitle}
             </p>
             <div style={{ overflowX: 'auto' }}>
                 <table className="data-table" style={{ fontSize: '0.78rem' }}>
                     <thead>
                         <tr>
-                            <th>KPI</th>
-                            <th>Fungsi (calculations.ts)</th>
-                            <th>Input (Step Survey)</th>
-                            <th>Formula / Logika</th>
+                            <th>{t.colKPI}</th>
+                            <th>{t.colFunction}</th>
+                            <th>{t.colInputStep}</th>
+                            <th>{t.colFormula}</th>
                         </tr>
                     </thead>
                     <tbody>

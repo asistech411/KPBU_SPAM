@@ -1,5 +1,6 @@
 import type { AuditCheck } from '@/lib/types'
 import { CheckCircle, Search, XCircle } from '@/lib/icons'
+import { useLang } from '@/lib/lang-context'
 
 type AuditChecksTableProps = {
     checks: AuditCheck[]
@@ -7,31 +8,33 @@ type AuditChecksTableProps = {
 }
 
 export default function AuditChecksTable({ checks, passCount }: AuditChecksTableProps) {
+    const { t } = useLang()
     return (
         <div>
             <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Search size={18} /> Audit Kelengkapan &amp; Konsistensi
+                <Search size={18} /> {t.auditTitle}
                 <span style={{ marginLeft: '0.75rem', fontSize: '0.85rem', fontWeight: 'normal', color: passCount === 13 ? '#059669' : '#d97706' }}>
-                    {passCount}/13 lulus
+                    {passCount}/13 {t.pass.toLowerCase()}
                 </span>
             </h3>
             <table className="data-table" style={{ fontSize: '0.82rem' }}>
                 <thead>
                     <tr>
-                        <th style={{ width: '60%' }}>Pemeriksaan</th>
-                        <th style={{ textAlign: 'center' }}>Nilai</th>
-                        <th style={{ textAlign: 'center' }}>Status</th>
+                        <th>Pemeriksaan</th>
+                        <th>Nilai</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {checks.map((c, i) => (
                         <tr key={i}>
-                            <td>{c.name}</td>
-                            <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{c.value}</td>
-                            <td style={{ textAlign: 'center', fontWeight: 'bold', color: c.pass ? '#059669' : '#dc2626' }}>
+                            <td style={{ color: c.pass ? undefined : '#d97706' }}>{c.name}</td>
+                            <td style={{ fontFamily: 'monospace', textAlign: 'center' }}>{c.value}</td>
+                            <td style={{ textAlign: 'center' }}>
                                 {c.pass
-                                    ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><CheckCircle size={14} /> LULUS</span>
-                                    : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><XCircle size={14} /> GAGAL</span>}
+                                    ? <><CheckCircle size={14} style={{ color: '#059669', verticalAlign: 'middle' }} /> <span style={{ color: '#059669', fontWeight: 600 }}>{t.pass}</span></>
+                                    : <><XCircle size={14} style={{ color: '#dc2626', verticalAlign: 'middle' }} /> <span style={{ color: '#dc2626', fontWeight: 600 }}>{t.fail}</span></>
+                                }
                             </td>
                         </tr>
                     ))}
