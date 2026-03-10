@@ -4,39 +4,29 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { RISKS, PHASES } from '@/lib/constants'
+import { RISKS } from '@/lib/constants'
+import type { Survey, AuditCheck } from '@/lib/types'
+import { getLCMMapping, getLCMStats, fmt1, fmt2, fmtPct, strictLockCount } from '@/lib/utils'
+import KPIGrid from '@/components/results/KPIGrid'
+import AuditChecksTable from '@/components/results/AuditChecksTable'
+import ExportButtons from '@/components/results/ExportButtons'
+import FAHPDetailTable from '@/components/results/FAHPDetailTable'
+import FAHPBarChart from '@/components/results/FAHPBarChart'
+import LCMHeatmap from '@/components/results/LCMHeatmap'
+import AllocationMatrix from '@/components/results/AllocationMatrix'
+import RiskAccordion from '@/components/results/RiskAccordion'
+import OutputSummaryCard from '@/components/results/OutputSummaryCard'
+import AuditTraceTable from '@/components/results/AuditTraceTable'
+import { BarChart2, Home, ChevronLeft, Layers } from '@/lib/icons'
+import LangToggle from '@/components/ui/LangToggle'
+import { useLang } from '@/lib/lang-context'
 
-interface Results {
-    fahp: {
-        weights: number[]
-        geometricMeans?: number[]
-        CR: number
-        CRPass: boolean
-    }
-    lcm: Record<string, { exposure: number | null; phase: string | null }>
-    pat: Record<string, {
-        tier1: Record<string, number | null>
-        tier2: Record<string, number | null>
-    }>
-    allocations: Record<string, {
-        tier1: { allocation: string; reason: string }
-        tier2: { allocation: string; reason: string; mitigationControls?: string[] }
-    }>
-    governanceLocks: Record<string, string[]>
-    confidence: Record<string, { level: string; reason: string }>
-}
-
-interface Survey {
-    id: string
-    respondentName: string
-    respondentEmail?: string
-    results: Results
-    createdAt: string
-}
+// --- Component ---
 
 export default function ResultsPage() {
     const params = useParams()
     const { data: session } = useSession()
+    const { t, lang } = useLang()
     const [survey, setSurvey] = useState<Survey | null>(null)
     const [loading, setLoading] = useState(true)
     const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set())
@@ -82,14 +72,15 @@ export default function ResultsPage() {
     const downloadCSV = () => {
         if (!survey?.results) return
         const r = survey.results
+        const lcmMap = getLCMMapping(r.lcm)
         const header = ['Risk', 'Weight', 'Exposure', 'Phase', 'Tier1', 'Tier2', 'Confidence']
         const rows = RISKS.map((ri, i) => {
             const a = r.allocations[ri.code]
             return [
                 ri.code,
                 (r.fahp.weights[i] * 100).toFixed(2),
-                r.lcm[ri.code].exposure || '',
-                r.lcm[ri.code].phase || '',
+                lcmMap[ri.code]?.exposure || '',
+                lcmMap[ri.code]?.phase || '',
                 a.tier1.allocation,
                 a.tier2.allocation,
                 r.confidence[ri.code].level
@@ -109,7 +100,7 @@ export default function ResultsPage() {
         return (
             <div className="main">
                 <div className="card">
-                    <h2>Memuat hasil...</h2>
+                    <h2>{lang === 'en' ? 'Loading results...' : 'Memuat hasil...'}</h2>
                 </div>
             </div>
         )
@@ -119,11 +110,12 @@ export default function ResultsPage() {
         return (
             <div className="main">
                 <div className="card">
-                    <h2>Hasil tidak ditemukan</h2>
-                    <p>Survey dengan ID ini tidak ditemukan atau belum di-submit.</p>
+                    <h2>{lang === 'en' ? 'Result not found' : 'Hasil tidak ditemukan'}</h2>
+                    <p>{lang === 'en' ? 'Survey with this ID was not found or has not been submitted.' : 'Survey dengan ID ini tidak ditemukan atau belum di-submit.'}</p>
                     <div className="btn-group">
                         <Link href={isAdmin ? '/admin' : '/'} className="btn btn-primary">
-                            {isAdmin ? '← Kembali ke Admin Dashboard' : 'Kembali ke Beranda'}
+                            <ChevronLeft size={16} />
+                            {isAdmin ? (lang === 'en' ? 'Back to Admin Dashboard' : 'Kembali ke Admin Dashboard') : t.back}
                         </Link>
                     </div>
                 </div>
@@ -132,235 +124,204 @@ export default function ResultsPage() {
     }
 
     const r = survey.results
-    const shared = RISKS.filter(ri =>
+    const lcmMap = getLCMMapping(r.lcm)
+    const lcmStats = getLCMStats(r.lcm)
+
+    // Derived KPI values
+    const topRIdx = r.fahp.weights.reduce((m, w, i) => w > r.fahp.weights[m] ? i : m, 0)
+    const topRisk = RISKS[topRIdx]
+    const sharedCount = RISKS.filter(ri =>
         r.allocations[ri.code].tier1.allocation === 'Shared' ||
         r.allocations[ri.code].tier2.allocation === 'Shared'
     ).length
-    const avgExp = Object.values(r.lcm).filter(l => l.exposure !== null).reduce((s, l) => s + (l.exposure || 0), 0) / 6
-    const topRIdx = r.fahp.weights.reduce((m, w, i) => w > r.fahp.weights[m] ? i : m, 0)
+    // BL-06: Strict 5-type lock count sesuai Excel CALC_Allocation (dari utils.ts)
+    const totalLockCount = RISKS.reduce((sum, ri) => sum + strictLockCount(ri.code, r.pat, r.allocations), 0)
+
+
+    // Survey-level PAT overall scores (average across all 6 risks)
+    const pat1Scores = RISKS.map(ri => r.pat[ri.code]?.tier1?.overallScore).filter((v): v is number => v != null)
+    const pat2Scores = RISKS.map(ri => r.pat[ri.code]?.tier2?.overallScore).filter((v): v is number => v != null)
+    const surveyPAT1 = pat1Scores.length > 0 ? pat1Scores.reduce((a, b) => a + b, 0) / pat1Scores.length : null
+    const surveyPAT2 = pat2Scores.length > 0 ? pat2Scores.reduce((a, b) => a + b, 0) / pat2Scores.length : null
+
+    // Allocation for top-weighted risk (for KPI cards)
+    const topAlloc = r.allocations[topRisk.code]
+
+    // Avg exposure fallback for old data
+    const avgExpFallback = Object.values(lcmMap).filter(l => l.exposure !== null).reduce((s, l) => s + (l.exposure || 0), 0) / 6
+    const avgExp = lcmStats?.avgExposure ?? avgExpFallback
+
+    // BL-07: Compute 13 AUDIT_Checks (integrity tests)
+    const weightSum = r.fahp.weights.reduce((a, b) => a + b, 0)
+    const phaseDistSum = lcmStats ? Object.values(lcmStats.phaseDistribution).reduce((a, b) => a + b.count, 0) : null
+    const auditChecks: AuditCheck[] = [
+        {
+            name: lang === 'en' ? 'FAHP Weights Sum = 1.00' : 'FAHP Weights Sum = 1.00',
+            value: fmt2(weightSum),
+            pass: Math.abs(weightSum - 1) < 0.001,
+        },
+        {
+            name: lang === 'en' ? 'CR < 0.10 (Consistent)' : 'CR < 0.10 (Konsisten)',
+            value: fmt2(r.fahp.CR),
+            pass: r.fahp.CRPass,
+        },
+        {
+            name: lang === 'en' ? 'All Weights > 0' : 'Semua Bobot > 0',
+            value: r.fahp.weights.every(w => w > 0) ? (lang === 'en' ? 'Yes' : 'Ya') : (lang === 'en' ? 'Weight ≤ 0 found' : 'Ada bobot ≤ 0'),
+            pass: r.fahp.weights.every(w => w > 0),
+        },
+        {
+            name: lang === 'en' ? 'LCM Exposure Score in 1–5' : 'Skor Eksposur LCM dalam 1–5',
+            value: Object.values(lcmMap).every(l => l.exposure === null || (l.exposure >= 1 && l.exposure <= 5)) ? (lang === 'en' ? 'All valid' : 'Semua valid') : (lang === 'en' ? 'Out of range' : 'Ada di luar range'),
+            pass: Object.values(lcmMap).every(l => l.exposure === null || (l.exposure >= 1 && l.exposure <= 5)),
+        },
+        {
+            name: lang === 'en' ? 'LCM Critical Phase in 1–4' : 'Fase Kritis LCM dalam 1–4',
+            value: Object.values(lcmMap).every(l => l.phase === null || (['1', '2', '3', '4'].includes(l.phase))) ? (lang === 'en' ? 'All valid' : 'Semua valid') : (lang === 'en' ? 'Out of range' : 'Ada di luar range'),
+            pass: Object.values(lcmMap).every(l => l.phase === null || (['1', '2', '3', '4'].includes(l.phase))),
+        },
+        {
+            name: lang === 'en' ? 'Phase Distribution Sum = 6' : 'Distribusi Fase Sum = 6',
+            value: phaseDistSum !== null ? String(phaseDistSum) : 'N/A',
+            pass: phaseDistSum === 6,
+        },
+        {
+            name: lang === 'en' ? 'PAT1 Overall Score in 1–5' : 'Skor PAT1 Overall dalam 1–5',
+            value: surveyPAT1 !== null ? fmt2(surveyPAT1) : 'N/A',
+            pass: surveyPAT1 !== null && surveyPAT1 >= 1 && surveyPAT1 <= 5,
+        },
+        {
+            name: lang === 'en' ? 'PAT2 Overall Score in 1–5' : 'Skor PAT2 Overall dalam 1–5',
+            value: surveyPAT2 !== null ? fmt2(surveyPAT2) : 'N/A',
+            pass: surveyPAT2 !== null && surveyPAT2 >= 1 && surveyPAT2 <= 5,
+        },
+        {
+            name: lang === 'en' ? 'All Tier-1 Allocations Filled' : 'Alokasi Tier-1 semua terisi',
+            value: RISKS.every(ri => r.allocations[ri.code]?.tier1?.allocation) ? (lang === 'en' ? 'Filled' : 'Terisi') : (lang === 'en' ? 'Missing' : 'Ada yang kosong'),
+            pass: RISKS.every(ri => r.allocations[ri.code]?.tier1?.allocation),
+        },
+        {
+            name: lang === 'en' ? 'All Tier-2 Allocations Filled' : 'Alokasi Tier-2 semua terisi',
+            value: RISKS.every(ri => r.allocations[ri.code]?.tier2?.allocation) ? (lang === 'en' ? 'Filled' : 'Terisi') : (lang === 'en' ? 'Missing' : 'Ada yang kosong'),
+            pass: RISKS.every(ri => r.allocations[ri.code]?.tier2?.allocation),
+        },
+        {
+            name: lang === 'en' ? 'Governance Locks Count ≥ 0' : 'Governance Locks Count ≥ 0',
+            value: String(totalLockCount),
+            pass: totalLockCount >= 0,
+        },
+        {
+            name: lang === 'en' ? 'Weight Percentage Sum ≈ 100%' : 'Persentase Bobot Sum ≈ 100%',
+            value: fmtPct(weightSum),
+            pass: Math.abs(weightSum - 1) < 0.001,
+        },
+        {
+            name: lang === 'en' ? 'Input Completeness (Weight+LCM+PAT)' : 'Kelengkapan Input (Bobot + LCM + PAT)',
+            value: r.fahp.CRPass && Object.values(lcmMap).every(l => l.exposure !== null) ? (lang === 'en' ? 'Complete' : 'Lengkap') : (lang === 'en' ? 'Incomplete' : 'Tidak lengkap'),
+            pass: r.fahp.CRPass && Object.values(lcmMap).every(l => l.exposure !== null),
+        },
+    ]
+    const auditPassCount = auditChecks.filter(a => a.pass).length
 
     return (
         <>
             <header className="header">
                 <div className="header-content">
                     <div className="logo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="32" height="32">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                            <path d="M2 17l10 5 10-5" />
-                            <path d="M2 12l10 5 10-5" />
-                        </svg>
-                        <span>Hasil Survey - {survey.respondentName}</span>
+                        <Layers width={32} height={32} />
+                        <span>{lang === 'en' ? 'Assessment Results - ' : 'Hasil Penilaian - '} {survey.respondentName}</span>
                     </div>
                     {isAdmin && (
                         <Link href="/admin" className="btn btn-sm btn-outline" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.5)' }}>
-                            ← Admin Dashboard
+                            <ChevronLeft size={16} /> {lang === 'en' ? 'Admin Dashboard' : 'Admin Dashboard'}
                         </Link>
                     )}
+                    <LangToggle />
                 </div>
             </header>
 
             <main className="main">
                 <div className="card">
-                    <h2 className="card-title">📊 Hasil Analisis & Rekomendasi</h2>
-                    <p className="card-subtitle">Berdasarkan jawaban Anda, berikut hasil analisis alokasi risiko KPBU SPAM.</p>
+                    <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <BarChart2 size={22} /> {t.resultsTitle}
+                    </h2>
+                    <p className="card-subtitle">{t.resultsSubtitle}</p>
 
-                    {/* KPI Grid */}
-                    <div className="kpi-grid">
-                        <div className={`kpi-card ${r.fahp.CRPass ? 'success' : 'warning'}`}>
-                            <div className="kpi-value">{(r.fahp.CR * 100).toFixed(1)}%</div>
-                            <div className="kpi-label">CR {r.fahp.CRPass ? '✓ Lolos' : '⚠ Review'}</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{RISKS[topRIdx].code}</div>
-                            <div className="kpi-label">Top Risk ({(r.fahp.weights[topRIdx] * 100).toFixed(1)}%)</div>
-                        </div>
-                        <div className="kpi-card">
-                            <div className="kpi-value">{avgExp.toFixed(1)}</div>
-                            <div className="kpi-label">Rata-rata Keterjadian</div>
-                        </div>
-                        <div className={`kpi-card ${shared > 3 ? 'warning' : ''}`}>
-                            <div className="kpi-value">{shared}</div>
-                            <div className="kpi-label">Risiko Shared</div>
-                        </div>
-                    </div>
+                    {/* KPI Grid — 10 cards (BL-04) */}
+                    <KPIGrid
+                        crPercent={`${(r.fahp.CR * 100).toFixed(1)}%`}
+                        crPass={r.fahp.CRPass}
+                        topRiskCode={topRisk.code}
+                        topRiskWeightLabel={fmtPct(r.fahp.weights[topRIdx])}
+                        avgExposureLabel={fmt1(avgExp)}
+                        sharedCount={sharedCount}
+                        dominantPhase={lcmStats?.dominantPhase ?? '-'}
+                        surveyPAT1Label={fmt2(surveyPAT1)}
+                        surveyPAT2Label={fmt2(surveyPAT2)}
+                        topTier1Allocation={topAlloc.tier1.allocation}
+                        topTier2Allocation={topAlloc.tier2.allocation}
+                        totalLockCount={totalLockCount}
+                    />
 
-                    {/* FAHP Bar Chart */}
-                    <div className="chart-container">
-                        <div className="chart-title">Bobot FAHP 6 Risiko</div>
-                        <div className="bar-chart">
-                            {RISKS.map((ri, i) => (
-                                <div key={ri.code} className="bar-item">
-                                    <div className="bar-label"><strong>{ri.code}</strong> {ri.name}</div>
-                                    <div className="bar-track">
-                                        <div className="bar-fill" style={{ width: `${r.fahp.weights[i] * 100 * 3}%`, background: ri.color }} />
-                                    </div>
-                                    <div className="bar-value" style={{ minWidth: '90px', textAlign: 'right' }}>
-                                        <strong>{(r.fahp.weights[i] * 100).toFixed(1)}%</strong>
-                                        {r.fahp.geometricMeans && (
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '2px' }}>
-                                                GM: {r.fahp.geometricMeans[i].toFixed(4)}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    {/* Output Summary Section (BL-05) */}
+                    <OutputSummaryCard
+                        lcmStats={lcmStats}
+                        pat={r.pat}
+                        allocations={r.allocations}
+                        surveyPAT1={surveyPAT1}
+                        surveyPAT2={surveyPAT2}
+                        topRiskCode={topRisk.code}
+                    />
 
-                    {/* LCM Heatmap */}
-                    <div className="chart-container">
-                        <div className="chart-title">Lifecycle Mapping: Keterjadian & Fase Kritis</div>
-                        <div className="heatmap">
-                            <div className="heatmap-header"></div>
-                            {PHASES.map(p => <div key={p.value} className="heatmap-header">{p.label}</div>)}
-                            {RISKS.map(ri => {
-                                const l = r.lcm[ri.code]
-                                const heatClass = !l.exposure ? '' : l.exposure <= 2 ? 'heat-low' : l.exposure <= 3 ? 'heat-medium' : l.exposure <= 4 ? 'heat-high' : 'heat-critical'
-                                return (
-                                    <>
-                                        <div key={`${ri.code}-label`} className="heatmap-cell heatmap-risk">
-                                            <strong>{ri.code}</strong> {ri.name} ({l.exposure || '-'})
-                                        </div>
-                                        {PHASES.map(p => (
-                                            <div key={`${ri.code}-${p.value}`} className={`heatmap-cell ${l.phase === p.label ? heatClass : ''}`}>
-                                                {l.phase === p.label ? '●' : ''}
-                                            </div>
-                                        ))}
-                                    </>
-                                )
-                            })}
-                        </div>
-                    </div>
+                    <FAHPDetailTable fahp={r.fahp} />
 
-                    {/* Allocation Matrix */}
-                    <div className="chart-container">
-                        <div className="chart-title">Matriks Alokasi Risiko 2-Tier</div>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="allocation-matrix">
-                                <thead>
-                                    <tr>
-                                        <th>Risiko</th>
-                                        <th>Bobot</th>
-                                        <th>Fase</th>
-                                        <th>Tier-1</th>
-                                        <th>Tier-2</th>
-                                        <th>Conf</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {RISKS.map((ri, i) => {
-                                        const a = r.allocations[ri.code]
-                                        const c = r.confidence[ri.code]
-                                        const t1c = a.tier1.allocation === 'Publik/PDAM' ? 'alloc-public' : a.tier1.allocation === 'BU/SPV' ? 'alloc-spv' : 'alloc-shared'
-                                        const isGovLead = a.tier1.allocation === 'Publik/PDAM'
-                                        const t2c = isGovLead ? 'alloc-na' : a.tier2.allocation === 'EPC/O&M' ? 'alloc-epc' : a.tier2.allocation === 'BU/SPV-retain' ? 'alloc-spv' : 'alloc-shared'
-                                        const cc = c.level === 'Tinggi' ? 'confidence-high' : c.level === 'Sedang' ? 'confidence-medium' : 'confidence-low'
-                                        return (
-                                            <tr key={ri.code}>
-                                                <td><strong>{ri.code}</strong> {ri.name}</td>
-                                                <td>{(r.fahp.weights[i] * 100).toFixed(1)}%</td>
-                                                <td>{r.lcm[ri.code].phase || '-'}</td>
-                                                <td className={t1c}>{a.tier1.allocation}</td>
-                                                <td className={t2c}>{a.tier2.allocation}{isGovLead ? '*' : ''}</td>
-                                                <td className={cc}>{c.level}</td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colSpan={6} style={{ fontSize: '0.8rem', color: 'var(--text-light)', textAlign: 'left', paddingTop: '1rem' }}>
-                                            * N/A = Tier-2 tidak diterapkan. Untuk risiko dengan Government/PDAM-lead, tidak ada transfer risiko ke EPC/O&M.
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+                    <FAHPBarChart fahp={r.fahp} />
 
-                    {/* Detail Accordion */}
-                    <h3 style={{ margin: '2rem 0 1rem' }}>Detail per Risiko</h3>
-                    <div className="accordion">
-                        {RISKS.map((ri, i) => {
-                            const a = r.allocations[ri.code]
-                            const locks = r.governanceLocks[ri.code]
-                            const c = r.confidence[ri.code]
-                            const isOpen = openAccordions.has(ri.code)
-                            const isGovLead = a.tier1.allocation === 'Publik/PDAM'
-                            const cc = c.level === 'Tinggi' ? 'confidence-high' : c.level === 'Sedang' ? 'confidence-medium' : 'confidence-low'
+                    <LCMHeatmap lcmMap={lcmMap} />
 
-                            return (
-                                <div key={ri.code} className="accordion-item">
-                                    <div className={`accordion-header ${isOpen ? 'active' : ''}`} onClick={() => toggleAccordion(ri.code)}>
-                                        <span>
-                                            <strong>{ri.code}</strong>: {ri.fullName} — <span className={cc}>Conf: {c.level}</span>
-                                        </span>
-                                        <svg className="accordion-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                    </div>
-                                    <div className={`accordion-content ${isOpen ? 'active' : ''}`}>
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <strong>Bobot:</strong> {(r.fahp.weights[i] * 100).toFixed(1)}% |
-                                            {r.fahp.geometricMeans && <><strong> Geomean:</strong> {r.fahp.geometricMeans[i].toFixed(4)} |</>}
-                                            <strong> Keterjadian:</strong> {r.lcm[ri.code].exposure || '-'}/5 |
-                                            <strong> Fase:</strong> {r.lcm[ri.code].phase || '-'}
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                                            <div style={{ padding: '1rem', background: isGovLead ? '#fff3e0' : '#e3f2fd', borderRadius: '8px', border: isGovLead ? '2px solid #ff9800' : 'none' }}>
-                                                <strong style={{ color: isGovLead ? '#e65100' : '#1565c0' }}>Tier-1: {a.tier1.allocation}</strong>
-                                                {isGovLead && <span style={{ marginLeft: '0.5rem', padding: '2px 8px', background: '#ff9800', color: '#fff', borderRadius: '4px', fontSize: '0.7rem' }}>RISIKO DITAHAN</span>}
-                                                <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{a.tier1.reason}</p>
-                                            </div>
-                                            <div style={{ padding: '1rem', background: isGovLead ? '#f5f5f5' : '#f3e5f5', borderRadius: '8px' }}>
-                                                <strong style={{ color: isGovLead ? '#757575' : '#7b1fa2' }}>Tier-2: {a.tier2.allocation}</strong>
-                                                <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{a.tier2.reason}</p>
-                                            </div>
-                                        </div>
+                    <AllocationMatrix
+                        fahpWeights={r.fahp.weights}
+                        allocations={r.allocations}
+                        confidence={r.confidence}
+                        lcmMap={lcmMap}
+                    />
 
-                                        {isGovLead && a.tier2.mitigationControls && a.tier2.mitigationControls.length > 0 && (
-                                            <div style={{ marginBottom: '1rem', padding: '1rem', background: 'linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%)', borderRadius: '8px', borderLeft: '4px solid #4caf50' }}>
-                                                <strong style={{ color: '#2e7d32' }}>🛠️ Mitigation Controls untuk EPC/O&M:</strong>
-                                                <ul style={{ margin: '0.5rem 0 0 1rem', fontSize: '0.85rem' }}>
-                                                    {a.tier2.mitigationControls.map((m, idx) => <li key={idx} style={{ margin: '0.25rem 0' }}>{m}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
+                    <RiskAccordion
+                        fahpWeights={r.fahp.weights}
+                        fahpGeoMeans={r.fahp.geometricMeans}
+                        pat={r.pat}
+                        allocations={r.allocations}
+                        governanceLocks={r.governanceLocks}
+                        confidence={r.confidence}
+                        lcmMap={lcmMap}
+                        openAccordions={openAccordions}
+                        toggleAccordion={toggleAccordion}
+                    />
 
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <strong>{isGovLead ? '⚠️ Governance Locks (Risiko Ditahan Publik):' : '🔒 Governance Locks:'}</strong>
-                                            <ul className="locks-list" style={{ marginTop: '0.5rem' }}>
-                                                {locks.map((l, idx) => <li key={idx}>{l}</li>)}
-                                            </ul>
-                                        </div>
+                    {/* BL-07: AUDIT_Checks — 13 Integrity Tests */}
+                    <div className="section-divider" />
+                    <AuditChecksTable checks={auditChecks} passCount={auditPassCount} />
 
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                                            <strong>Confidence:</strong> {c.level} — {c.reason}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
+                    {/* BL-09: AUDIT_Trace — KPI Lineage Map */}
+                    <div className="section-divider" />
+                    <AuditTraceTable />
 
                     {/* Export Buttons */}
-                    <div className="export-buttons">
-                        <button className="btn btn-primary" onClick={downloadJSON}>
-                            📥 Unduh JSON
-                        </button>
-                        <button className="btn btn-secondary" onClick={downloadCSV}>
-                            📄 Unduh CSV
-                        </button>
-                        <button className="btn btn-outline" onClick={() => window.print()}>
-                            🖨️ Cetak
-                        </button>
-                    </div>
+                    <ExportButtons
+                        onDownloadJSON={downloadJSON}
+                        onDownloadCSV={downloadCSV}
+                        onPrint={() => window.print()}
+                    />
 
                     <div className="btn-group">
                         {isAdmin ? (
-                            <Link href="/admin" className="btn btn-secondary">← Kembali ke Admin Dashboard</Link>
+                            <Link href="/admin" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <ChevronLeft size={16} /> {t.backToDashboard}
+                            </Link>
                         ) : (
-                            <Link href="/" className="btn btn-secondary">🏠 Kembali ke Beranda</Link>
+                            <Link href="/" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Home size={16} /> {t.back}
+                            </Link>
                         )}
                     </div>
                 </div>

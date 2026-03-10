@@ -63,30 +63,30 @@ export const STEPS = [
 
 // PAT Tier-1 Items
 export const PAT1_ITEMS = [
-    { code: 'PAT1-01', text: 'Keputusan teknis BU/SPV berpengaruh langsung mengurangi risiko.', construct: 'Control' },
-    { code: 'PAT1-02', text: 'Kewenangan BU/SPV memadai untuk mengelola risiko.', construct: 'Control' },
-    { code: 'PAT1-03', text: 'Informasi lebih lengkap di BU/SPV dibanding publik.', construct: 'Info' },
-    { code: 'PAT1-04', text: 'Pengalaman lapangan BU/SPV lebih mampu merespons risiko.', construct: 'Info' },
-    { code: 'PAT1-05', text: 'Kinerja dapat diukur dengan indikator yang jelas.', construct: 'Verifiability' },
-    { code: 'PAT1-06', text: 'Biaya pemantauan kinerja masih wajar.', construct: 'Verifiability' },
-    { code: 'PAT1-07', text: 'Risiko terutama ditentukan faktor eksternal.', construct: 'Externality', reverse: true },
-    { code: 'PAT1-08', text: 'Perubahan risiko lebih dipengaruhi kebijakan/regulasi.', construct: 'Externality', reverse: true },
-    { code: 'PAT1-09', text: 'BU/SPV punya kemampuan finansial memadai.', construct: 'Capacity' },
-    { code: 'PAT1-10', text: 'BU/SPV punya kapasitas teknis memadai.', construct: 'Capacity' },
-    { code: 'PAT1-11', text: 'Kontrak mengatur KPI/SLA yang jelas.', construct: 'Incentives' },
-    { code: 'PAT1-12', text: 'Mekanisme pembayaran/penalti cukup jelas.', construct: 'Incentives' },
+    { code: 'PAT1-01', text: 'Keputusan teknis BU/SPV berpengaruh langsung mengurangi risiko.', textEN: 'Technical decisions of SPV directly reduce risk.', construct: 'Control' },
+    { code: 'PAT1-02', text: 'Kewenangan BU/SPV memadai untuk mengelola risiko.', textEN: 'SPV has adequate authority to manage the risk.', construct: 'Control' },
+    { code: 'PAT1-03', text: 'Informasi lebih lengkap di BU/SPV dibanding publik.', textEN: 'SPV holds more complete information than the public sector.', construct: 'Info' },
+    { code: 'PAT1-04', text: 'Pengalaman lapangan BU/SPV lebih mampu merespons risiko.', textEN: 'SPV field experience makes it better at responding to the risk.', construct: 'Info' },
+    { code: 'PAT1-05', text: 'Kinerja dapat diukur dengan indikator yang jelas.', textEN: 'Performance can be measured by clear indicators.', construct: 'Verifiability' },
+    { code: 'PAT1-06', text: 'Biaya pemantauan kinerja masih wajar.', textEN: 'The cost of monitoring performance is reasonable.', construct: 'Verifiability' },
+    { code: 'PAT1-07', text: 'Risiko terutama ditentukan faktor eksternal.', textEN: 'Risk is primarily determined by external factors.', construct: 'Externality', reverse: true },
+    { code: 'PAT1-08', text: 'Perubahan risiko lebih dipengaruhi kebijakan/regulasi.', textEN: 'Changes in risk are more influenced by policies/regulations.', construct: 'Externality', reverse: true },
+    { code: 'PAT1-09', text: 'BU/SPV punya kemampuan finansial memadai.', textEN: 'SPV has adequate financial capacity.', construct: 'Capacity' },
+    { code: 'PAT1-10', text: 'BU/SPV punya kapasitas teknis memadai.', textEN: 'SPV has adequate technical capacity.', construct: 'Capacity' },
+    { code: 'PAT1-11', text: 'Kontrak mengatur KPI/SLA yang jelas.', textEN: 'The contract stipulates clear KPIs/SLAs.', construct: 'Incentives' },
+    { code: 'PAT1-12', text: 'Mekanisme pembayaran/penalti cukup jelas.', textEN: 'The payment/penalty mechanism is sufficiently clear.', construct: 'Incentives' },
 ] as const
 
 // PAT Tier-2 Items
 export const PAT2_ITEMS = [
-    { code: 'PAT2-01', text: 'EPC/O&M memiliki pengaruh langsung terhadap faktor teknis.', construct: 'Control' },
-    { code: 'PAT2-02', text: 'Ruang lingkup kerja EPC/O&M memberi kendali cukup.', construct: 'Control' },
-    { code: 'PAT2-03', text: 'Kinerja EPC/O&M dapat diukur objektif.', construct: 'Verifiability' },
-    { code: 'PAT2-04', text: 'Hubungan kualitas kerja dan outcome dapat ditelusuri.', construct: 'Verifiability' },
-    { code: 'PAT2-05', text: 'Kontrak memungkinkan pengalihan risiko via harga/LD.', construct: 'Incentives' },
-    { code: 'PAT2-06', text: 'Ada mekanisme asuransi/perlindungan kontraktual.', construct: 'Incentives' },
-    { code: 'PAT2-07', text: 'EPC/O&M punya kapasitas finansial memadai.', construct: 'Capacity' },
-    { code: 'PAT2-08', text: 'EPC/O&M punya rekam jejak teknis relevan.', construct: 'Capacity' },
+    { code: 'PAT2-01', text: 'EPC/O&M memiliki pengaruh langsung terhadap faktor teknis.', textEN: 'EPC/O&M has direct influence over technical factors.', construct: 'Control' },
+    { code: 'PAT2-02', text: 'Ruang lingkup kerja EPC/O&M memberi kendali cukup.', textEN: 'The scope of work provides EPC/O&M with adequate control.', construct: 'Control' },
+    { code: 'PAT2-03', text: 'Kinerja EPC/O&M dapat diukur objektif.', textEN: 'EPC/O&M performance can be measured objectively.', construct: 'Verifiability' },
+    { code: 'PAT2-04', text: 'Hubungan kualitas kerja dan outcome dapat ditelusuri.', textEN: 'The relationship between work quality and outcomes is traceable.', construct: 'Verifiability' },
+    { code: 'PAT2-05', text: 'Kontrak memungkinkan pengalihan risiko via harga/LD.', textEN: 'The contract allows risk transfer via pricing/Liquidated Damages.', construct: 'Incentives' },
+    { code: 'PAT2-06', text: 'Ada mekanisme asuransi/perlindungan kontraktual.', textEN: 'There are insurance mechanisms/contractual protections.', construct: 'Incentives' },
+    { code: 'PAT2-07', text: 'EPC/O&M punya kapasitas finansial memadai.', textEN: 'EPC/O&M has adequate financial capacity.', construct: 'Capacity' },
+    { code: 'PAT2-08', text: 'EPC/O&M punya rekam jejak teknis relevan.', textEN: 'EPC/O&M has a relevant technical track record.', construct: 'Capacity' },
 ] as const
 
 // Role options

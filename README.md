@@ -19,6 +19,7 @@ Aplikasi web survey untuk mengumpulkan dan menganalisis persepsi risiko pada pro
 - **ORM**: Prisma
 - **Auth**: NextAuth.js
 - **Language**: TypeScript
+- **Icons**: lucide-react
 
 ##  Prerequisites
 
@@ -82,23 +83,42 @@ Buka http://localhost:3000
 
 ```
 ├── prisma/
-│   ├── schema.prisma    # Database schema
-│   └── seed.ts          # Seed admin user
+│   ├── schema.prisma        # Database schema
+│   └── seed.ts              # Seed admin user
 ├── src/
 │   ├── app/
-│   │   ├── admin/       # Admin pages
-│   │   ├── api/         # API routes
-│   │   ├── results/     # Results page
-│   │   ├── survey/      # Survey wizard
-│   │   └── page.tsx     # Landing page
+│   │   ├── admin/           # Admin pages
+│   │   ├── api/             # API routes
+│   │   ├── results/[id]/    # Results page (323 baris, -58%)
+│   │   ├── survey/          # Survey wizard (349 baris, -56%)
+│   │   └── page.tsx         # Landing page
+│   ├── components/
+│   │   ├── results/         # 9 komponen hasil (KPIGrid, FAHPDetailTable, dll)
+│   │   └── survey/          # 7 komponen step survey (StepFAHP, StepPAT, dll)
 │   ├── lib/
-│   │   ├── calculations.ts  # FAHP, PAT logic
-│   │   ├── constants.ts     # Risks, phases, items
-│   │   └── db.ts            # Prisma client
+│   │   ├── calculations.ts  # FAHP, PAT, LCM logic (JANGAN DIUBAH)
+│   │   ├── constants.ts     # RISKS, PHASES, FAHP_SCALE, PAT items
+│   │   ├── db.ts            # Prisma client
+│   │   ├── icons.ts         # Centralized lucide-react re-exports
+│   │   ├── types.ts         # Shared TypeScript interfaces (Results, SurveyState, dll)
+│   │   └── utils.ts         # fmt1/fmt2/fmtPct, getLCMMapping, strictLockCount
 │   └── styles/
 │       └── globals.css      # All styles
 └── package.json
 ```
+
+### ⚠️ Catatan Refactor (branch `refactor`)
+
+File-file di bawah ini adalah **hasil refaktor** — JSX-nya dipecah ke `components/`, **logikanya tidak berubah**:
+- `src/app/results/[id]/page.tsx` — hanya berisi data fetch + state management
+- `src/app/survey/page.tsx` — hanya berisi state + handlers + navigation
+- `src/lib/types.ts` — semua interface dipindah ke sini (dari kedua page)
+- `src/lib/utils.ts` — semua helper dipindah ke sini (dari results page)
+
+**File yang TIDAK BOLEH diubah tanpa pemahaman penuh:**
+- `src/lib/calculations.ts` — kalkulasi FAHP, PAT, LCM (tervalidasi vs Excel)
+- `src/lib/constants.ts` — definisi risiko, fase, item PAT, skala FAHP
+
 
 ##  Security Notes
 

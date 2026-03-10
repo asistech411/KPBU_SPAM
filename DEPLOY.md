@@ -163,7 +163,47 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 ## 🔄 Update Deployment
 
-Ketika ada update baru:
+### Branch Strategy
+
+```
+gg-dev  →  ug-dev  →  refactor  →  main (belum diupdate)
+                ↑
+           VPS saat ini (ug-dev)
+```
+
+| Branch | Deskripsi |
+|--------|-----------|
+| `gg-dev` | Base development, kalkulasi FAHP/PAT/LCM |
+| `ug-dev` | Fitur LCM stats + PAT overall scores — **VPS pakai ini** |
+| `refactor` | Refactor besar: icons, types, utils, 16 komponen baru |
+| `main` | Production (belum di-merge dari refactor) |
+
+### Update VPS ke branch terbaru (dari `ug-dev`):
+- path project sesuaikan dengan path di VPS
+
+```bash
+cd /var/www/kpbu-spam
+git pull origin ug-dev
+npm install          # pastikan dependencies up-to-date
+npm run build
+pm2 restart kpbu-spam
+```
+
+### Jika ingin deploy branch `refactor` ke VPS:
+
+> ⚠️ `refactor` branch menambah dependency `lucide-react` — wajib `npm install`
+
+```bash
+cd /var/www/kpbu-spam
+git fetch origin
+git checkout refactor
+git pull origin refactor
+npm install          # PENTING: install lucide-react
+npm run build
+pm2 restart kpbu-spam
+```
+
+### Update biasa (setelah merge ke branch aktif VPS):
 
 ```bash
 cd /var/www/kpbu-spam

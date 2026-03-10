@@ -1,6 +1,55 @@
-import { RISKS, FAHP_MAP, RI_TABLE, PAT1_ITEMS, PAT2_ITEMS, PHASE_MAP } from './constants'
+import { RISKS, PHASES, FAHP_MAP, RI_TABLE, PAT1_ITEMS, PAT2_ITEMS, PHASE_MAP } from './constants'
 
-// FAHP Calculation
+// --- Shared helpers ---
+
+const mean = (arr: number[]): number | null =>
+    arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null
+
+const nonNullMean = (values: (number | null)[]): number | null =>
+    mean(values.filter((v): v is number => v !== null))
+
+// --- Types ---
+
+export type LCMStats = {
+    avgExposure: number | null
+    maxExposure: number | null
+    minExposure: number | null
+    highRiskCount: number   // exposure >= 4
+    lowRiskCount: number    // exposure <= 2
+    phaseDistribution: Array<{ phase: string; count: number; percentage: number }>
+    dominantPhase: string | null
+}
+
+export type LCMResult = {
+    mapping: Record<string, { exposure: number | null; phase: string | null }>
+    stats: LCMStats
+}
+
+type Tier1Metrics = {
+    Control: number | null
+    Info: number | null
+    Verifiability: number | null
+    Externality: number | null   // adjusted (6 − raw) — sesuai CALC_PAT Excel (baris 9 = 2.50)
+    ExternalityRaw: number | null // raw sebelum reverse, untuk referensi saja
+    Capacity: number | null
+    Incentives: number | null
+    ttCount: number
+    totalItems: number
+    overallScore: number | null  // grand mean 6 konstruk pakai Externality adjusted
+}
+
+type Tier2Metrics = {
+    Control: number | null
+    Verifiability: number | null
+    Incentives: number | null
+    Capacity: number | null
+    ttCount: number
+    totalItems: number
+    overallScore: number | null         // grand mean of 4 constructs
+}
+
+// --- FAHP Calculation ---
+
 export function calculateFAHP(pairwise: Record<string, string>) {
     const n = 6
     const getItem = (v?: string) => (v ? FAHP_MAP[v.toString()] : undefined)
@@ -64,49 +113,75 @@ export function calculateFAHP(pairwise: Record<string, string>) {
     }
 }
 
-// LCM Calculation
-export function calculateLCM(exposure: Record<string, number>, phaseCritical: Record<string, string | number>) {
-    const result: Record<string, { exposure: number | null; phase: string | null }> = {}
+// --- LCM Calculation (BL-01 & BL-02) ---
+
+export function calculateLCM(
+    exposure: Record<string, number>,
+    phaseCritical: Record<string, string | number>
+): LCMResult {
+    // Build mapping: risk → { exposure, phase label }
+    const mapping: Record<string, { exposure: number | null; phase: string | null }> = {}
     RISKS.forEach(r => {
         const p = phaseCritical[r.code]
-        result[r.code] = {
+        mapping[r.code] = {
             exposure: exposure[r.code] ?? null,
             phase: p ? (PHASE_MAP[p.toString()]?.label || p.toString()) : null
         }
     })
-    return result
+
+    // Exposure statistics
+    const exposures = RISKS
+        .map(r => mapping[r.code].exposure)
+        .filter((v): v is number => v !== null)
+
+    const avgExposure = mean(exposures)
+    const maxExposure = exposures.length > 0 ? Math.max(...exposures) : null
+    const minExposure = exposures.length > 0 ? Math.min(...exposures) : null
+    const highRiskCount = exposures.filter(v => v >= 4).length
+    const lowRiskCount = exposures.filter(v => v <= 2).length
+
+    // Phase distribution (BL-02)
+    const phaseCounts: Record<string, number> = {}
+    PHASES.forEach(p => { phaseCounts[p.label] = 0 })
+    RISKS.forEach(r => {
+        const phase = mapping[r.code].phase
+        if (phase && phase in phaseCounts) phaseCounts[phase]++
+    })
+
+    const phaseDistribution = PHASES.map(p => ({
+        phase: p.label,
+        count: phaseCounts[p.label],
+        percentage: (phaseCounts[p.label] / RISKS.length) * 100
+    }))
+
+    const maxCount = Math.max(...phaseDistribution.map(d => d.count))
+    const dominantPhase = maxCount > 0
+        ? (phaseDistribution.find(d => d.count === maxCount)?.phase ?? null)
+        : null
+
+    return {
+        mapping,
+        stats: {
+            avgExposure,
+            maxExposure,
+            minExposure,
+            highRiskCount,
+            lowRiskCount,
+            phaseDistribution,
+            dominantPhase
+        }
+    }
 }
 
 type PATData = Record<string, Record<string, number | 'TT'>>
 
-type Tier1Metrics = {
-    Control: number | null;
-    Info: number | null;
-    Verifiability: number | null;
-    Externality: number | null;
-    ExternalityReversed: number | null;
-    Capacity: number | null;
-    Incentives: number | null;
-    ttCount: number;
-    totalItems: number;
-}
+// --- PAT Calculation (BL-03) ---
 
-type Tier2Metrics = {
-    Control: number | null;
-    Verifiability: number | null;
-    Incentives: number | null;
-    Capacity: number | null;
-    ttCount: number;
-    totalItems: number;
-}
-
-// PAT Calculation
 export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
     const result: Record<string, { tier1: Tier1Metrics; tier2: Tier2Metrics }> = {}
 
-    const mean = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null
-
     RISKS.forEach(r => {
+        // Tier-1: collect items per construct
         const t1D = pat1Data[r.code] || {}
         const t1C: Record<string, number[]> = {
             Control: [], Info: [], Verifiability: [], Externality: [], ExternalityRaw: [], Capacity: [], Incentives: []
@@ -125,6 +200,7 @@ export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
             }
         })
 
+        // Tier-2: collect items per construct
         const t2D = pat2Data[r.code] || {}
         const t2C: Record<string, number[]> = {
             Control: [], Verifiability: [], Incentives: [], Capacity: []
@@ -138,17 +214,38 @@ export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
             }
         })
 
+        // Tier-1 overall score: grand mean 6 konstruk
+        // Externality pakai ADJUSTED (t1C.Externality = 6−raw) sesuai CALC_PAT!F14:F15
+        // Contoh: raw=[4,3] → adjusted=[2,3] → mean=2.50 → overall=(4+3.5+3.5+2.5+4+3.5)/6=3.50 ✓
+        const t1OverallScore = nonNullMean([
+            mean(t1C.Control),
+            mean(t1C.Info),
+            mean(t1C.Verifiability),
+            mean(t1C.Externality),   // adjusted (6−raw), sesuai Excel
+            mean(t1C.Capacity),
+            mean(t1C.Incentives),
+        ])
+
+        // Tier-2 overall score: grand mean of 4 constructs
+        const t2OverallScore = nonNullMean([
+            mean(t2C.Control),
+            mean(t2C.Verifiability),
+            mean(t2C.Incentives),
+            mean(t2C.Capacity),
+        ])
+
         result[r.code] = {
             tier1: {
                 Control: mean(t1C.Control),
                 Info: mean(t1C.Info),
                 Verifiability: mean(t1C.Verifiability),
-                Externality: mean(t1C.ExternalityRaw),
-                ExternalityReversed: mean(t1C.Externality),
+                Externality: mean(t1C.Externality),      // adjusted (2.50) — sesuai CALC_PAT
+                ExternalityRaw: mean(t1C.ExternalityRaw), // raw (3.50) — untuk referensi
                 Capacity: mean(t1C.Capacity),
                 Incentives: mean(t1C.Incentives),
                 ttCount: PAT1_ITEMS.filter(i => t1D[i.code] === 'TT').length,
-                totalItems: PAT1_ITEMS.length
+                totalItems: PAT1_ITEMS.length,
+                overallScore: t1OverallScore,
             },
             tier2: {
                 Control: mean(t2C.Control),
@@ -156,7 +253,8 @@ export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
                 Incentives: mean(t2C.Incentives),
                 Capacity: mean(t2C.Capacity),
                 ttCount: PAT2_ITEMS.filter(i => t2D[i.code] === 'TT').length,
-                totalItems: PAT2_ITEMS.length
+                totalItems: PAT2_ITEMS.length,
+                overallScore: t2OverallScore,
             }
         }
     })
@@ -164,7 +262,8 @@ export function calculatePAT(pat1Data: PATData, pat2Data: PATData) {
     return result
 }
 
-// Allocation determination
+// --- Allocation determination ---
+
 export function determineAllocation(pat: ReturnType<typeof calculatePAT>, code: string) {
     const t1 = pat[code].tier1
     const t2 = pat[code].tier2
@@ -212,7 +311,7 @@ export function determineAllocation(pat: ReturnType<typeof calculatePAT>, code: 
     }
 }
 
-function deriveMitigationControls(t2: Record<string, number | null>, code: string): string[] {
+function deriveMitigationControls(t2: Tier2Metrics, code: string): string[] {
     const controls: string[] = []
     controls.push('KPI teknis terukur (availability, kualitas output, response time)')
     controls.push('Milestone readiness & commissioning checklist')
@@ -226,7 +325,8 @@ function deriveMitigationControls(t2: Record<string, number | null>, code: strin
     return controls.slice(0, 5)
 }
 
-// Governance locks
+// --- Governance locks ---
+
 export function determineGovernanceLocks(
     alloc: ReturnType<typeof determineAllocation>,
     pat: ReturnType<typeof calculatePAT>,
@@ -278,6 +378,8 @@ export function determineGovernanceLocks(
     return [...new Set(locks)].slice(0, 6)
 }
 
+// --- Confidence level ---
+
 export function determineConfidence(
     fahp: ReturnType<typeof calculateFAHP>,
     pat: ReturnType<typeof calculatePAT>,
@@ -285,8 +387,8 @@ export function determineConfidence(
 ) {
     const t1 = pat[code].tier1
     const t2 = pat[code].tier2
-    const tt1 = (t1.ttCount ?? 0) / (t1.totalItems ?? 1)
-    const tt2 = (t2.ttCount ?? 0) / (t2.totalItems ?? 1)
+    const tt1 = t1.ttCount / t1.totalItems
+    const tt2 = t2.ttCount / t2.totalItems
     const weak = t1.Control === null || t1.Verifiability === null || t2.Control === null || t2.Verifiability === null
 
     if (!fahp.CRPass || tt1 > 0.4 || tt2 > 0.4 || weak) {
