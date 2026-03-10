@@ -153,7 +153,7 @@ export default function SurveyPage() {
     // Submit survey
     const submitSurvey = async () => {
         if (!data.respondentName) {
-            alert('Mohon isi nama Anda sebelum submit.')
+            alert(t.alertNameRequired)
             return
         }
 
@@ -170,7 +170,7 @@ export default function SurveyPage() {
             }
         } catch (e) {
             console.error('Submit failed:', e)
-            alert('Gagal submit survey. Silakan coba lagi.')
+            alert(t.alertSubmitError)
         }
         setSaving(false)
     }
@@ -190,10 +190,10 @@ export default function SurveyPage() {
             case 0: // Landing
                 return (
                     <div className="card">
-                        <h2 className="card-title">Selamat Datang</h2>
-                        <p className="card-subtitle">Klik tombol di bawah untuk memulai survey.</p>
+                        <h2 className="card-title">{t.welcomeTitle}</h2>
+                        <p className="card-subtitle">{t.welcomeBody}</p>
                         <div className="btn-group" style={{ justifyContent: 'center' }}>
-                            <button className="btn btn-primary btn-lg" onClick={nextPage}>Mulai Survey →</button>
+                            <button className="btn btn-primary btn-lg" onClick={nextPage}>{t.startSurvey} →</button>
                         </div>
                     </div>
                 )
@@ -270,7 +270,7 @@ export default function SurveyPage() {
                         onUpdate={updatePat1}
                         onNext={nextPage}
                         onPrev={prevPage}
-                        nextLabel="Lanjutkan ke Tier-2 →"
+                        nextLabel={t.continueToTier2}
                     />
                 )
 
@@ -285,7 +285,7 @@ export default function SurveyPage() {
                         onUpdate={updatePat2}
                         onNext={nextPage}
                         onPrev={prevPage}
-                        nextLabel="Review & Submit →"
+                        nextLabel={t.continueToReview}
                     />
                 )
 
@@ -331,9 +331,11 @@ export default function SurveyPage() {
                 <div className="stepper">
                     {STEPS.map((s, i) => {
                         const stepKeys: Record<number, keyof typeof t> = {
+                            0: 'stepLabelStart',
                             1: 'stepLabelConsent', 2: 'stepLabelScreening', 3: 'stepLabelProject',
                             4: 'stepLabelFAHP', 5: 'stepLabelLCM', 6: 'stepLabelPAT1',
                             7: 'stepLabelPAT2', 8: 'stepLabelReview',
+                            9: 'stepLabelResult',
                         }
                         const label = (stepKeys[s.path] ? t[stepKeys[s.path]] : s.label) as string
                         return (
@@ -350,7 +352,7 @@ export default function SurveyPage() {
                 <div className="progress-bar">
                     <div className="progress-fill" style={{ width: `${(currentPage / 9) * 100}%` }} />
                 </div>
-                <div className="progress-text">Halaman {currentPage} dari 9</div>
+                <div className="progress-text">{t.pageProgress(currentPage, 9)}</div>
             </div>
 
             <main className="main">

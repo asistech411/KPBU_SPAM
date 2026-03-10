@@ -29,7 +29,7 @@ export default function StepLCM({
     lcmExposure, lcmPhaseCritical, lcmExpCount, lcmPhaseCount,
     isLcmValid, onUpdateLcmExposure, onUpdateLcmPhase, onNext, onPrev,
 }: Props) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     return (
         <div className="card">
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={20} /> {t.lcmTitle}</h2>
@@ -97,7 +97,7 @@ export default function StepLCM({
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <AlertTriangle size={14} /> {t.fahpWarningTitle}
                     </strong><br />
-                    Keterjadian: <strong>{lcmExpCount}</strong>/6 | Fase Kritis: <strong>{lcmPhaseCount}</strong>/6<br />
+                    {lang === 'en' ? 'Occurrence:' : 'Keterjadian:'} <strong>{lcmExpCount}</strong>/6 | {lang === 'en' ? 'Critical Phase:' : 'Fase Kritis:'} <strong>{lcmPhaseCount}</strong>/6<br />
                     {t.lcmWarning}
                 </div>
             )}

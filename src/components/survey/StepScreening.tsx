@@ -23,7 +23,7 @@ type Props = {
 }
 
 export default function StepScreening({ data, isValid, onUpdateField, onTogglePhase, onNext, onPrev }: Props) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     return (
         <div className="card">
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -52,7 +52,7 @@ export default function StepScreening({ data, isValid, onUpdateField, onTogglePh
                         <label className="form-label">{t.scr02} <span style={{ color: 'var(--danger)' }}>*</span></label>
                         <select className="form-select" value={data.role} onChange={e => onUpdateField('role', e.target.value)}>
                             <option value="">-- {t.selectPlaceholder} --</option>
-                            {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{t.roles[o.value] ?? o.label}</option>)}
                         </select>
                     </div>
 
@@ -62,7 +62,7 @@ export default function StepScreening({ data, isValid, onUpdateField, onTogglePh
                             {EXPERIENCE_OPTIONS.map(o => (
                                 <label key={o.value} className={`radio-label ${data.experience === o.value ? 'selected' : ''}`}>
                                     <input type="radio" name="scr03" value={o.value} checked={data.experience === o.value} onChange={() => onUpdateField('experience', o.value)} />
-                                    <span>{o.label}</span>
+                                    <span>{t.experience[o.value] ?? o.label}</span>
                                 </label>
                             ))}
                         </div>
@@ -102,7 +102,7 @@ export default function StepScreening({ data, isValid, onUpdateField, onTogglePh
             </div>
             {!isValid && data.screening01 === 'Ya' && (
                 <div className="alert alert-warning" style={{ marginTop: '1rem' }}>
-                    Mohon lengkapi semua field yang bertanda * sebelum melanjutkan.
+                    {lang === 'en' ? 'Please complete all required fields (*) before continuing.' : 'Mohon lengkapi semua field yang bertanda * sebelum melanjutkan.'}
                 </div>
             )}
         </div>

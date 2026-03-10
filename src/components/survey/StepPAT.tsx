@@ -31,7 +31,7 @@ type Props = {
 }
 
 export default function StepPAT({ tier, items, patData, activeTab, onTabChange, onUpdate, onNext, onPrev, nextLabel }: Props) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     const tierBadge = tier === 1 ? 'tier1' : 'tier2'
     const itemCount = items.length
     const btnNextLabel = nextLabel ?? `${t.next} →`
@@ -41,7 +41,7 @@ export default function StepPAT({ tier, items, patData, activeTab, onTabChange, 
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{tier === 1 ? <ClipboardList size={20} /> : <Wrench size={20} />} {t.patTitle(tier)}</h2>
             <p className="card-subtitle">{t.patSubtitle(tier)}</p>
             <div className="alert alert-info">
-                <span className={`tier-badge ${tierBadge}`}>Tier-{tier}</span> <strong>{itemCount} item per risiko</strong> — {t.patScaleHint}
+                <span className={`tier-badge ${tierBadge}`}>Tier-{tier}</span> <strong>{itemCount} {t.patItemPerRisk}</strong> — {t.patScaleHint(tier)}
             </div>
 
             <div className="tab-container">
@@ -62,13 +62,13 @@ export default function StepPAT({ tier, items, patData, activeTab, onTabChange, 
                         <div style={{ overflowX: 'auto' }}>
                             <table className="likert-grid">
                                 <thead>
-                                    <tr><th style={{ width: '40%' }}>Pernyataan</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>TT</th></tr>
+                                    <tr><th style={{ width: '40%' }}>{t.patStatementCol}</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>{t.patDkCol}</th></tr>
                                 </thead>
                                 <tbody>
                                     {items.map(item => (
                                         <tr key={item.code}>
                                             <td style={{ textAlign: 'left', fontWeight: 'normal', fontSize: '0.85rem' }}>
-                                                <strong>{item.code}</strong>{'reverse' in item && item.reverse ? '*' : ''}: {item.text}
+                                                <strong>{item.code}</strong>{'reverse' in item && item.reverse ? '*' : ''}: {lang === 'en' && 'textEN' in item ? (item.textEN as string) : item.text}
                                             </td>
                                             {[1, 2, 3, 4, 5].map(n => (
                                                 <td key={n}>

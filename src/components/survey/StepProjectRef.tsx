@@ -22,7 +22,7 @@ type Props = {
 }
 
 export default function StepProjectRef({ data, isValid, onUpdateField, onNext, onPrev }: Props) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     return (
         <div className="card">
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={20} /> {t.projectTitle}</h2>
@@ -35,7 +35,7 @@ export default function StepProjectRef({ data, isValid, onUpdateField, onNext, o
                     {['KPBU SPAM langsung', 'KPBU SPAM diketahui', 'PPP sejenis'].map(v => (
                         <label key={v} className={`radio-label ${data.projectType === v ? 'selected' : ''}`}>
                             <input type="radio" name="pr01" value={v} checked={data.projectType === v} onChange={() => onUpdateField('projectType', v)} />
-                            <span>{v === 'KPBU SPAM langsung' ? 'KPBU SPAM yang saya tangani langsung' : v === 'KPBU SPAM diketahui' ? 'KPBU SPAM yang saya ketahui sangat baik' : 'PPP air minum sejenis'}</span>
+                            <span>{t.projectType[v] ?? v}</span>
                         </label>
                     ))}
                 </div>
@@ -52,7 +52,7 @@ export default function StepProjectRef({ data, isValid, onUpdateField, onNext, o
                     {['AP', 'Tarif', 'Campuran', 'Tidak tahu'].map(v => (
                         <label key={v} className={`radio-label ${data.projectPayment === v ? 'selected' : ''}`}>
                             <input type="radio" name="pr03" value={v} checked={data.projectPayment === v} onChange={() => onUpdateField('projectPayment', v)} />
-                            <span>{v}</span>
+                            <span>{t.projectPayment[v] ?? v}</span>
                         </label>
                     ))}
                 </div>
@@ -62,7 +62,7 @@ export default function StepProjectRef({ data, isValid, onUpdateField, onNext, o
                 <label className="form-label">{t.pr04}</label>
                 <select className="form-select" value={data.projectStatus} onChange={e => onUpdateField('projectStatus', e.target.value)}>
                     <option value="">-- {t.selectPlaceholder} --</option>
-                    {PROJECT_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    {PROJECT_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{t.projectStatus[o.value] ?? o.label}</option>)}
                 </select>
             </div>
 
@@ -80,7 +80,9 @@ export default function StepProjectRef({ data, isValid, onUpdateField, onNext, o
             </div>
             {!isValid && (
                 <div className="alert alert-warning" style={{ marginTop: '1rem' }}>
-                    Mohon lengkapi Tipe proyek dan Fase dominan sebelum melanjutkan.
+                    {lang === 'en'
+                        ? 'Please complete the project type and the last phase you handled before continuing.'
+                        : 'Mohon lengkapi tipe proyek dan fase terakhir yang Anda tangani sebelum melanjutkan.'}
                 </div>
             )}
         </div>

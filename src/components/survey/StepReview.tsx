@@ -24,18 +24,18 @@ type Props = {
 }
 
 export default function StepReview({ data, fahpCount, lcmExpCount, lcmPhaseCount, saving, onUpdateField, onSubmit, onPrev }: Props) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     const pat1Count = RISKS.reduce((sum, r) => sum + Object.keys(data.pat1Data[r.code] || {}).length, 0)
     const pat2Count = RISKS.reduce((sum, r) => sum + Object.keys(data.pat2Data[r.code] || {}).length, 0)
 
     const validations = [
         { label: t.stepLabelConsent, valid: data.consent },
         { label: t.stepLabelScreening, valid: data.screening01 === 'Ya' },
-        { label: 'Peran', valid: !!data.role },
-        { label: 'Pengalaman', valid: !!data.experience },
-        { label: 'Fase ditangani', valid: data.phases.length > 0 },
-        { label: 'Tipe proyek', valid: !!data.projectType },
-        { label: 'Fase dominan', valid: !!data.projectPhase },
+        { label: t.reviewRole.replace(':', ''), valid: !!data.role },
+        { label: t.reviewExp.replace(':', ''), valid: !!data.experience },
+        { label: lang === 'en' ? 'Handled phases' : 'Fase ditangani', valid: data.phases.length > 0 },
+        { label: t.reviewType.replace(':', ''), valid: !!data.projectType },
+        { label: t.reviewDomPhase.replace(':', ''), valid: !!data.projectPhase },
         { label: `FAHP (${fahpCount}/15)`, valid: fahpCount === 15 },
         { label: `LCM (${lcmExpCount}/6, ${lcmPhaseCount}/6)`, valid: lcmExpCount === 6 && lcmPhaseCount === 6 },
         { label: `PAT T1 (${pat1Count}/72)`, valid: pat1Count >= 36 },
@@ -65,22 +65,22 @@ export default function StepReview({ data, fahpCount, lcmExpCount, lcmPhaseCount
             {allValid && <div className="alert alert-success">{t.reviewReady}</div>}
 
             <div className="review-section">
-                <h4>Profil Responden</h4>
-                <div className="review-item"><span>Peran:</span><strong>{data.role || '-'}</strong></div>
-                <div className="review-item"><span>Pengalaman:</span><strong>{data.experience || '-'}</strong></div>
-                <div className="review-item"><span>Fase:</span><strong>{data.phases.join(', ') || '-'}</strong></div>
-                <div className="review-item"><span>Dual-role:</span><strong>{data.dualRole ? t.yes : t.no}</strong></div>
+                <h4>{t.reviewProfile}</h4>
+                <div className="review-item"><span>{t.reviewRole}</span><strong>{data.role ? (t.roles[data.role] ?? data.role) : '-'}</strong></div>
+                <div className="review-item"><span>{t.reviewExp}</span><strong>{data.experience ? (t.experience[data.experience] ?? data.experience) : '-'}</strong></div>
+                <div className="review-item"><span>{t.reviewPhase}</span><strong>{data.phases.length > 0 ? data.phases.map(p => t.phases[p] ?? p).join(', ') : '-'}</strong></div>
+                <div className="review-item"><span>{t.reviewDual}</span><strong>{data.dualRole ? t.yes : t.no}</strong></div>
             </div>
 
             <div className="review-section">
-                <h4>Proyek Referensi</h4>
-                <div className="review-item"><span>Tipe:</span><strong>{data.projectType || '-'}</strong></div>
-                <div className="review-item"><span>Lokasi:</span><strong>{data.projectLocation || '-'}</strong></div>
-                <div className="review-item"><span>Fase dominan:</span><strong>{data.projectPhase || '-'}</strong></div>
+                <h4>{t.reviewProj}</h4>
+                <div className="review-item"><span>{t.reviewType}</span><strong>{data.projectType ? (t.projectType[data.projectType] ?? data.projectType) : '-'}</strong></div>
+                <div className="review-item"><span>{t.reviewLoc}</span><strong>{data.projectLocation || '-'}</strong></div>
+                <div className="review-item"><span>{t.reviewDomPhase}</span><strong>{data.projectPhase ? (t.phases[data.projectPhase] ?? data.projectPhase) : '-'}</strong></div>
             </div>
 
             <div className="review-section">
-                <h4>Completeness</h4>
+                <h4>{t.reviewChecklist}</h4>
                 <div className="review-item"><span>FAHP:</span><strong>{fahpCount}/15</strong></div>
                 <div className="review-item"><span>LCM {t.lcm01Title.replace('LCM-01. ', '')}:</span><strong>{lcmExpCount}/6</strong></div>
                 <div className="review-item"><span>LCM {t.lcm02Title.replace('LCM-02. ', '')}:</span><strong>{lcmPhaseCount}/6</strong></div>

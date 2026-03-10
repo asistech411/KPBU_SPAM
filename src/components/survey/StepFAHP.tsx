@@ -26,7 +26,7 @@ type Props = {
 }
 
 export default function StepFAHP({ fahpPairwise, fahpPairs, fahpCount, isFahpValid, onUpdateFahp, onNext, onPrev }: Props) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     return (
         <>
             <div className="risk-sidebar">
@@ -57,11 +57,14 @@ export default function StepFAHP({ fahpPairwise, fahpPairs, fahpCount, isFahpVal
                                 <div className="fahp-risk left">{p.r1.code}<br /><small>{p.r1.name}</small></div>
                                 <select className="form-select fahp-select" value={fahpPairwise[k] || ''} onChange={e => onUpdateFahp(k, e.target.value)}>
                                     <option value="">{t.selectPlaceholder}</option>
-                                    {FAHP_SCALE.map(item => (
-                                        <option key={item.code} value={item.crisp}>
-                                            {item.code.startsWith('1/') ? p.r2.code : p.r1.code} {item.labelID.replace(' Penting', '')} ({item.code})
-                                        </option>
-                                    ))}
+                                    {FAHP_SCALE.map(item => {
+                                        const label = lang === 'en' ? item.labelEN : item.labelID;
+                                        return (
+                                            <option key={item.code} value={item.crisp}>
+                                                {item.code.startsWith('1/') ? p.r2.code : p.r1.code} {label.replace(/ Penting| Important/gi, '')} ({item.code})
+                                            </option>
+                                        )
+                                    })}
                                 </select>
                                 <div className="fahp-risk right">{p.r2.code}<br /><small>{p.r2.name}</small></div>
                             </div>
