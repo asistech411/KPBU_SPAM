@@ -32,7 +32,7 @@ export default function AllocationMatrix({ fahpWeights, allocations, confidence,
                             <th>{t.colPhase}</th>
                             <th>Tier-1</th>
                             <th>Tier-2</th>
-                            <th>Conf</th>
+                            <th>{t.confidenceLabel.substring(0, 4)}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,10 +47,10 @@ export default function AllocationMatrix({ fahpWeights, allocations, confidence,
                                 <tr key={ri.code}>
                                     <td><strong>{ri.code}</strong> {ri.name}</td>
                                     <td>{fmtPct(fahpWeights[i])}</td>
-                                    <td>{lcmMap[ri.code]?.phase || '-'}</td>
-                                    <td className={t1c}>{a.tier1.allocation}</td>
-                                    <td className={t2c}>{a.tier2.allocation}{isGovLead ? '*' : ''}</td>
-                                    <td className={cc}>{c.level}</td>
+                                    <td>{lcmMap[ri.code]?.phase ? (t.phases[lcmMap[ri.code].phase!] ?? lcmMap[ri.code].phase) : '-'}</td>
+                                    <td className={t1c}>{t.allocations[a.tier1.allocation] ?? a.tier1.allocation}</td>
+                                    <td className={t2c}>{t.allocations[a.tier2.allocation] ?? a.tier2.allocation}{isGovLead ? '*' : ''}</td>
+                                    <td className={cc}>{t.reportPhrases?.[c.level] ?? c.level}</td>
                                 </tr>
                             )
                         })}

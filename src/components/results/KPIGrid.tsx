@@ -54,7 +54,7 @@ export default function KPIGrid({
                 <div className="kpi-label">{t.kpiSharedRisk}</div>
             </div>
             <div className="kpi-card">
-                <div className="kpi-value">{dominantPhase}</div>
+                <div className="kpi-value">{t.phases[dominantPhase] ?? dominantPhase}</div>
                 <div className="kpi-label">{t.kpiDomPhase}</div>
             </div>
             <div className="kpi-card">
@@ -66,11 +66,11 @@ export default function KPIGrid({
                 <div className="kpi-label">{t.kpiPatT2}</div>
             </div>
             <div className="kpi-card">
-                <div className="kpi-value" style={{ fontSize: '0.95rem' }}>{topTier1Allocation}</div>
+                <div className="kpi-value" style={{ fontSize: '0.95rem' }}>{t.allocations[topTier1Allocation] ?? topTier1Allocation}</div>
                 <div className="kpi-label">{t.kpiAllocT1} ({topRiskCode})</div>
             </div>
             <div className="kpi-card">
-                <div className="kpi-value" style={{ fontSize: '0.95rem' }}>{topTier2Allocation}</div>
+                <div className="kpi-value" style={{ fontSize: '0.95rem' }}>{t.allocations[topTier2Allocation] ?? topTier2Allocation}</div>
                 <div className="kpi-label">{t.kpiAllocT2} ({topRiskCode})</div>
             </div>
             <div className="kpi-card">

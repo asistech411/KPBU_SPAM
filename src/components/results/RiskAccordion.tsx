@@ -58,7 +58,7 @@ export default function RiskAccordion({
                         <div key={ri.code} className="accordion-item">
                             <div className={`accordion-header ${isOpen ? 'active' : ''}`} onClick={() => toggleAccordion(ri.code)}>
                                 <span>
-                                    <strong>{ri.code}</strong>: {ri.fullName} — <span className={cc}>Conf: {c.level}</span>
+                                    <strong>{ri.code}</strong>: {ri.fullName} — <span className={cc}>{t.confidenceLabel.substring(0, 4)}: {t.reportPhrases?.[c.level] ?? c.level}</span>
                                 </span>
                                 <svg className="accordion-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M6 9l6 6 6-6" />
@@ -70,7 +70,7 @@ export default function RiskAccordion({
                                     <strong>{t.riskWeightLabel}:</strong> {fmtPct(fahpWeights[i])} |
                                     {fahpGeoMeans && <><strong> GM:</strong> {fahpGeoMeans[i].toFixed(4)} |</>}
                                     <strong> {t.riskExposureLabel}:</strong> {lcmMap[ri.code]?.exposure || '-'}/5 |
-                                    <strong> {t.riskPhaseLabel}:</strong> {lcmMap[ri.code]?.phase || '-'} |
+                                    <strong> {t.riskPhaseLabel}:</strong> {lcmMap[ri.code]?.phase ? (t.phases[lcmMap[ri.code].phase!] ?? lcmMap[ri.code].phase) : '-'} |
                                     <strong> PAT1:</strong> {fmt2(t1Score)} |
                                     <strong> PAT2:</strong> {fmt2(t2Score)}
                                 </div>
@@ -78,13 +78,13 @@ export default function RiskAccordion({
                                 {/* Tier-1 & Tier-2 allocation cards */}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                                     <div style={{ padding: '1rem', background: isGovLead ? '#fff3e0' : '#e3f2fd', borderRadius: '8px', border: isGovLead ? '2px solid #ff9800' : 'none' }}>
-                                        <strong style={{ color: isGovLead ? '#e65100' : '#1565c0' }}>Tier-1: {a.tier1.allocation}</strong>
+                                        <strong style={{ color: isGovLead ? '#e65100' : '#1565c0' }}>Tier-1: {t.allocations[a.tier1.allocation] ?? a.tier1.allocation}</strong>
                                         {isGovLead && <span style={{ marginLeft: '0.5rem', padding: '2px 8px', background: '#ff9800', color: '#fff', borderRadius: '4px', fontSize: '0.7rem' }}>{t.riskRetained}</span>}
-                                        <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{a.tier1.reason}</p>
+                                        <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{t.reportPhrases?.[a.tier1.reason] ?? a.tier1.reason}</p>
                                     </div>
                                     <div style={{ padding: '1rem', background: isGovLead ? '#f5f5f5' : '#f3e5f5', borderRadius: '8px' }}>
-                                        <strong style={{ color: isGovLead ? '#757575' : '#7b1fa2' }}>Tier-2: {a.tier2.allocation}</strong>
-                                        <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{a.tier2.reason}</p>
+                                        <strong style={{ color: isGovLead ? '#757575' : '#7b1fa2' }}>Tier-2: {t.allocations[a.tier2.allocation] ?? a.tier2.allocation}</strong>
+                                        <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{t.reportPhrases?.[a.tier2.reason] ?? a.tier2.reason}</p>
                                     </div>
                                 </div>
 
@@ -95,7 +95,7 @@ export default function RiskAccordion({
                                             <Wrench size={15} /> {t.mitigationTitle}
                                         </strong>
                                         <ul style={{ margin: '0.5rem 0 0 1rem', fontSize: '0.85rem' }}>
-                                            {a.tier2.mitigationControls.map((m, idx) => <li key={idx} style={{ margin: '0.25rem 0' }}>{m}</li>)}
+                                            {a.tier2.mitigationControls.map((m, idx) => <li key={idx} style={{ margin: '0.25rem 0' }}>{t.reportPhrases?.[m] ?? m}</li>)}
                                         </ul>
                                     </div>
                                 )}
@@ -108,13 +108,13 @@ export default function RiskAccordion({
                                             : <><Lock size={15} /> {t.govLocksLabel}</>}
                                     </strong>
                                     <ul className="locks-list" style={{ marginTop: '0.5rem' }}>
-                                        {locks.map((l, idx) => <li key={idx}>{l}</li>)}
+                                        {locks.map((l, idx) => <li key={idx}>{t.reportPhrases?.[l] ?? l}</li>)}
                                     </ul>
                                 </div>
 
                                 {/* Confidence */}
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                                    <strong>{t.confidenceLabel}:</strong> {c.level} — {c.reason}
+                                    <strong>{t.confidenceLabel}:</strong> {t.reportPhrases?.[c.level] ?? c.level} — {t.reportPhrases?.[c.reason] ?? c.reason}
                                 </div>
                             </div>
                         </div>

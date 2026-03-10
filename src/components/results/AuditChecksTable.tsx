@@ -8,7 +8,7 @@ type AuditChecksTableProps = {
 }
 
 export default function AuditChecksTable({ checks, passCount }: AuditChecksTableProps) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     return (
         <div>
             <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -20,9 +20,9 @@ export default function AuditChecksTable({ checks, passCount }: AuditChecksTable
             <table className="data-table" style={{ fontSize: '0.82rem' }}>
                 <thead>
                     <tr>
-                        <th>Pemeriksaan</th>
-                        <th>Nilai</th>
-                        <th>Status</th>
+                        <th>{lang === 'en' ? 'Check' : 'Pemeriksaan'}</th>
+                        <th>{lang === 'en' ? 'Value' : 'Nilai'}</th>
+                        <th>{lang === 'en' ? 'Status' : 'Status'}</th>
                     </tr>
                 </thead>
                 <tbody>

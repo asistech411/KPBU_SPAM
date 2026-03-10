@@ -18,7 +18,7 @@ type Props = {
 }
 
 export default function FAHPDetailTable({ fahp }: Props) {
-    const { t } = useLang()
+    const { t, lang } = useLang()
     // Rank: urutkan index berdasar weight descending
     const ranked = [...fahp.weights]
         .map((w, i) => ({ i, w }))
@@ -30,8 +30,8 @@ export default function FAHPDetailTable({ fahp }: Props) {
 
     // Step 4 CR check items (CI = (λmax−n)/(n−1), n=6, RI=1.24 from Saaty)
     const crItems = [
-        { label: 'λmax', value: fahp.lambdaMax?.toFixed(4) ?? '-', note: 'rata-rata A×w/w' },
-        { label: 'n', value: '6', note: 'jumlah risiko' },
+        { label: 'λmax', value: fahp.lambdaMax?.toFixed(4) ?? '-', note: lang === 'en' ? 'avg A×w/w' : 'rata-rata A×w/w' },
+        { label: 'n', value: '6', note: lang === 'en' ? 'number of risks' : 'jumlah risiko' },
         { label: 'CI', value: fahp.lambdaMax != null ? (((fahp.lambdaMax - 6) / 5)).toFixed(4) : '-', note: '(λmax−n)/(n−1)' },
         { label: 'RI (n=6)', value: '1.24', note: 'Saaty table' },
         { label: 'CR', value: fahp.CR.toFixed(4), note: 'CI / RI', highlight: true },
@@ -50,11 +50,11 @@ export default function FAHPDetailTable({ fahp }: Props) {
                 <table className="allocation-matrix">
                     <thead>
                         <tr>
-                            <th>Risiko</th>
-                            <th>Step 2: Geometric Mean</th>
-                            <th>Step 3: Bobot (Weight)</th>
-                            <th>Persentase</th>
-                            <th>Rank</th>
+                            <th>{t.colRisk}</th>
+                            <th>{lang === 'en' ? 'Step 2: Geometric Mean' : 'Step 2: Geometric Mean'}</th>
+                            <th>{lang === 'en' ? 'Step 3: Weight' : 'Step 3: Bobot (Weight)'}</th>
+                            <th>{lang === 'en' ? 'Percentage' : 'Persentase'}</th>
+                            <th>{lang === 'en' ? 'Rank' : 'Rank'}</th>
                         </tr>
                     </thead>
                     <tbody>

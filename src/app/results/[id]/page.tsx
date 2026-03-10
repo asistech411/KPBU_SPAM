@@ -26,7 +26,7 @@ import { useLang } from '@/lib/lang-context'
 export default function ResultsPage() {
     const params = useParams()
     const { data: session } = useSession()
-    const { t } = useLang()
+    const { t, lang } = useLang()
     const [survey, setSurvey] = useState<Survey | null>(null)
     const [loading, setLoading] = useState(true)
     const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set())
@@ -100,7 +100,7 @@ export default function ResultsPage() {
         return (
             <div className="main">
                 <div className="card">
-                    <h2>Memuat hasil...</h2>
+                    <h2>{lang === 'en' ? 'Loading results...' : 'Memuat hasil...'}</h2>
                 </div>
             </div>
         )
@@ -110,12 +110,12 @@ export default function ResultsPage() {
         return (
             <div className="main">
                 <div className="card">
-                    <h2>Hasil tidak ditemukan</h2>
-                    <p>Survey dengan ID ini tidak ditemukan atau belum di-submit.</p>
+                    <h2>{lang === 'en' ? 'Result not found' : 'Hasil tidak ditemukan'}</h2>
+                    <p>{lang === 'en' ? 'Survey with this ID was not found or has not been submitted.' : 'Survey dengan ID ini tidak ditemukan atau belum di-submit.'}</p>
                     <div className="btn-group">
                         <Link href={isAdmin ? '/admin' : '/'} className="btn btn-primary">
                             <ChevronLeft size={16} />
-                            {isAdmin ? 'Kembali ke Admin Dashboard' : 'Kembali ke Beranda'}
+                            {isAdmin ? (lang === 'en' ? 'Back to Admin Dashboard' : 'Kembali ke Admin Dashboard') : t.back}
                         </Link>
                     </div>
                 </div>
@@ -156,68 +156,68 @@ export default function ResultsPage() {
     const phaseDistSum = lcmStats ? Object.values(lcmStats.phaseDistribution).reduce((a, b) => a + b.count, 0) : null
     const auditChecks: AuditCheck[] = [
         {
-            name: 'FAHP Weights Sum = 1.00',
+            name: lang === 'en' ? 'FAHP Weights Sum = 1.00' : 'FAHP Weights Sum = 1.00',
             value: fmt2(weightSum),
             pass: Math.abs(weightSum - 1) < 0.001,
         },
         {
-            name: 'CR < 0.10 (Konsisten)',
+            name: lang === 'en' ? 'CR < 0.10 (Consistent)' : 'CR < 0.10 (Konsisten)',
             value: fmt2(r.fahp.CR),
             pass: r.fahp.CRPass,
         },
         {
-            name: 'Semua Bobot > 0',
-            value: r.fahp.weights.every(w => w > 0) ? 'Ya' : 'Ada bobot ≤ 0',
+            name: lang === 'en' ? 'All Weights > 0' : 'Semua Bobot > 0',
+            value: r.fahp.weights.every(w => w > 0) ? (lang === 'en' ? 'Yes' : 'Ya') : (lang === 'en' ? 'Weight ≤ 0 found' : 'Ada bobot ≤ 0'),
             pass: r.fahp.weights.every(w => w > 0),
         },
         {
-            name: 'Skor Eksposur LCM dalam 1–5',
-            value: Object.values(lcmMap).every(l => l.exposure === null || (l.exposure >= 1 && l.exposure <= 5)) ? 'Semua valid' : 'Ada di luar range',
+            name: lang === 'en' ? 'LCM Exposure Score in 1–5' : 'Skor Eksposur LCM dalam 1–5',
+            value: Object.values(lcmMap).every(l => l.exposure === null || (l.exposure >= 1 && l.exposure <= 5)) ? (lang === 'en' ? 'All valid' : 'Semua valid') : (lang === 'en' ? 'Out of range' : 'Ada di luar range'),
             pass: Object.values(lcmMap).every(l => l.exposure === null || (l.exposure >= 1 && l.exposure <= 5)),
         },
         {
-            name: 'Fase Kritis LCM dalam 1–4',
-            value: Object.values(lcmMap).every(l => l.phase === null || (['1', '2', '3', '4'].includes(l.phase))) ? 'Semua valid' : 'Ada di luar range',
+            name: lang === 'en' ? 'LCM Critical Phase in 1–4' : 'Fase Kritis LCM dalam 1–4',
+            value: Object.values(lcmMap).every(l => l.phase === null || (['1', '2', '3', '4'].includes(l.phase))) ? (lang === 'en' ? 'All valid' : 'Semua valid') : (lang === 'en' ? 'Out of range' : 'Ada di luar range'),
             pass: Object.values(lcmMap).every(l => l.phase === null || (['1', '2', '3', '4'].includes(l.phase))),
         },
         {
-            name: 'Distribusi Fase Sum = 6',
+            name: lang === 'en' ? 'Phase Distribution Sum = 6' : 'Distribusi Fase Sum = 6',
             value: phaseDistSum !== null ? String(phaseDistSum) : 'N/A',
             pass: phaseDistSum === 6,
         },
         {
-            name: 'Skor PAT1 Overall dalam 1–5',
+            name: lang === 'en' ? 'PAT1 Overall Score in 1–5' : 'Skor PAT1 Overall dalam 1–5',
             value: surveyPAT1 !== null ? fmt2(surveyPAT1) : 'N/A',
             pass: surveyPAT1 !== null && surveyPAT1 >= 1 && surveyPAT1 <= 5,
         },
         {
-            name: 'Skor PAT2 Overall dalam 1–5',
+            name: lang === 'en' ? 'PAT2 Overall Score in 1–5' : 'Skor PAT2 Overall dalam 1–5',
             value: surveyPAT2 !== null ? fmt2(surveyPAT2) : 'N/A',
             pass: surveyPAT2 !== null && surveyPAT2 >= 1 && surveyPAT2 <= 5,
         },
         {
-            name: 'Alokasi Tier-1 semua terisi',
-            value: RISKS.every(ri => r.allocations[ri.code]?.tier1?.allocation) ? 'Terisi' : 'Ada yang kosong',
+            name: lang === 'en' ? 'All Tier-1 Allocations Filled' : 'Alokasi Tier-1 semua terisi',
+            value: RISKS.every(ri => r.allocations[ri.code]?.tier1?.allocation) ? (lang === 'en' ? 'Filled' : 'Terisi') : (lang === 'en' ? 'Missing' : 'Ada yang kosong'),
             pass: RISKS.every(ri => r.allocations[ri.code]?.tier1?.allocation),
         },
         {
-            name: 'Alokasi Tier-2 semua terisi',
-            value: RISKS.every(ri => r.allocations[ri.code]?.tier2?.allocation) ? 'Terisi' : 'Ada yang kosong',
+            name: lang === 'en' ? 'All Tier-2 Allocations Filled' : 'Alokasi Tier-2 semua terisi',
+            value: RISKS.every(ri => r.allocations[ri.code]?.tier2?.allocation) ? (lang === 'en' ? 'Filled' : 'Terisi') : (lang === 'en' ? 'Missing' : 'Ada yang kosong'),
             pass: RISKS.every(ri => r.allocations[ri.code]?.tier2?.allocation),
         },
         {
-            name: 'Governance Locks Count ≥ 0',
+            name: lang === 'en' ? 'Governance Locks Count ≥ 0' : 'Governance Locks Count ≥ 0',
             value: String(totalLockCount),
             pass: totalLockCount >= 0,
         },
         {
-            name: 'Persentase Bobot Sum ≈ 100%',
+            name: lang === 'en' ? 'Weight Percentage Sum ≈ 100%' : 'Persentase Bobot Sum ≈ 100%',
             value: fmtPct(weightSum),
             pass: Math.abs(weightSum - 1) < 0.001,
         },
         {
-            name: 'Kelengkapan Input (Bobot + LCM + PAT)',
-            value: r.fahp.CRPass && Object.values(lcmMap).every(l => l.exposure !== null) ? 'Lengkap' : 'Tidak lengkap',
+            name: lang === 'en' ? 'Input Completeness (Weight+LCM+PAT)' : 'Kelengkapan Input (Bobot + LCM + PAT)',
+            value: r.fahp.CRPass && Object.values(lcmMap).every(l => l.exposure !== null) ? (lang === 'en' ? 'Complete' : 'Lengkap') : (lang === 'en' ? 'Incomplete' : 'Tidak lengkap'),
             pass: r.fahp.CRPass && Object.values(lcmMap).every(l => l.exposure !== null),
         },
     ]
@@ -229,11 +229,11 @@ export default function ResultsPage() {
                 <div className="header-content">
                     <div className="logo">
                         <Layers width={32} height={32} />
-                        <span>Hasil Survey - {survey.respondentName}</span>
+                        <span>{lang === 'en' ? 'Assessment Results - ' : 'Hasil Penilaian - '} {survey.respondentName}</span>
                     </div>
                     {isAdmin && (
                         <Link href="/admin" className="btn btn-sm btn-outline" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.5)' }}>
-                            <ChevronLeft size={16} /> Admin Dashboard
+                            <ChevronLeft size={16} /> {lang === 'en' ? 'Admin Dashboard' : 'Admin Dashboard'}
                         </Link>
                     )}
                     <LangToggle />

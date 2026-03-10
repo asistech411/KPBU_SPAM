@@ -52,7 +52,7 @@ export default function OutputSummaryCard({
 
                     {/* Phase Distribution */}
                     <p style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-dark)' }}>
-                        {t.lcmPhaseDist} &mdash; {t.lcmPhaseDominant}: <span style={{ color: 'var(--primary)' }}>{lcmStats.dominantPhase ?? '-'}</span>
+                        {t.lcmPhaseDist} &mdash; {t.lcmPhaseDominant}: <span style={{ color: 'var(--primary)' }}>{t.phases[lcmStats.dominantPhase ?? ''] ?? lcmStats.dominantPhase ?? '-'}</span>
                     </p>
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         {lcmStats.phaseDistribution.map(d => (
@@ -63,7 +63,7 @@ export default function OutputSummaryCard({
                                 borderRadius: '8px', textAlign: 'center'
                             }}>
                                 <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{d.count}</div>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.85 }}>{d.phase}</div>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.85 }}>{t.phases[d.phase] ?? d.phase}</div>
                                 <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>{d.percentage.toFixed(1)}%</div>
                             </div>
                         ))}
@@ -97,8 +97,8 @@ export default function OutputSummaryCard({
                                     <td><strong>{ri.code}</strong> {ri.name}</td>
                                     <td>{fmt2(t1Score)}</td>
                                     <td>{fmt2(t2Score)}</td>
-                                    <td className={t1c}>{a.tier1.allocation}</td>
-                                    <td className={t2c}>{a.tier2.allocation}</td>
+                                    <td className={t1c}>{t.allocations[a.tier1.allocation] ?? a.tier1.allocation}</td>
+                                    <td className={t2c}>{t.allocations[a.tier2.allocation] ?? a.tier2.allocation}</td>
                                 </tr>
                             )
                         })}
