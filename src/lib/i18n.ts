@@ -17,7 +17,7 @@ export const T = {
         // === COMMON ===
         back: 'Kembali',
         next: 'Lanjutkan',
-        submit: 'Submit & Lihat Hasil',
+        submit: 'Kirim Jawaban & Lihat Hasil',
         saving: 'Menyimpan...',
 
         // === SURVEY HEADER ===
@@ -76,7 +76,7 @@ export const T = {
         fahpTitle: 'Perbandingan Kepentingan Risiko',
         fahpSubtitle: 'Bandingkan tingkat kepentingan antar risiko secara berpasangan.',
         fahpScaleHint: 'Gunakan skala berikut: S = Sama penting, SL = Sedikit lebih penting, L = Lebih penting, SV = Sangat lebih penting, E = Ekstrem lebih penting.',
-        fahpFilled: 'Terisi',
+        fahpFilled: (n: number) => `Terisi ${n} dari 15 perbandingan`,
         fahpWarningTitle: 'Perlu diisi lengkap!',
         fahpWarningBody: 'Semua 15 pasangan harus diisi agar perhitungan bobot FAHP valid.',
         riskDefTitle: 'Ringkasan 6 Risiko',
@@ -141,7 +141,7 @@ export const T = {
         alertSubmitError: 'Gagal submit survey. Silakan coba lagi.',
         continueToTier2: 'Lanjutkan ke Tier-2 →',
         continueToReview: 'Tinjau & Kirim →',
-        pageProgress: (current: number, total: number) => `Halaman ${current} dari ${total}`,
+        pageProgress: (current: number, total: number) => `Langkah ${current} dari ${total}`,
 
         // === RESULTS PAGE ===
         resultsTitle: 'Hasil Penilaian —',
@@ -325,7 +325,7 @@ export const T = {
         // === COMMON ===
         back: 'Back',
         next: 'Continue',
-        submit: 'Submit & View Results',
+        submit: 'Submit Responses & View Results',
         saving: 'Saving...',
 
         // === SURVEY HEADER ===
@@ -384,7 +384,7 @@ export const T = {
         fahpTitle: 'Risk Importance Comparison',
         fahpSubtitle: 'Compare the importance of risks in pairs.',
         fahpScaleHint: 'Use the following scale: S = Equally important, SL = Slightly more important, L = More important, SV = Much more important, E = Extremely more important.',
-        fahpFilled: 'completed',
+        fahpFilled: (n: number) => `${n} of 15 comparisons completed`,
         fahpWarningTitle: 'All pairs required!',
         fahpWarningBody: 'All 15 pairs must be filled for valid FAHP weight calculation.',
         riskDefTitle: 'Overview of 6 Risks',
@@ -449,7 +449,7 @@ export const T = {
         alertSubmitError: 'Failed to submit the assessment. Please try again.',
         continueToTier2: 'Continue to Tier-2 →',
         continueToReview: 'Review & Submit →',
-        pageProgress: (current: number, total: number) => `Page ${current} of ${total}`,
+        pageProgress: (current: number, total: number) => `Step ${current} of ${total}`,
 
         // === RESULTS PAGE ===
         resultsTitle: 'Assessment Results —',

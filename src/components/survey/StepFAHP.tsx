@@ -47,7 +47,7 @@ export default function StepFAHP({ fahpPairwise, fahpPairs, fahpCount, isFahpVal
                 <p className="card-subtitle">{t.fahpSubtitle}</p>
                 <div className="alert alert-info"><strong>Skala:</strong> {t.fahpScaleHint}</div>
                 <div className={`completeness ${fahpCount === 15 ? 'complete' : 'incomplete'}`}>
-                    <span>{t.fahpFilled}: <strong>{fahpCount}</strong>/15</span>
+                    <span>{t.fahpFilled(fahpCount)}</span>
                 </div>
                 <div className="fahp-grid">
                     {fahpPairs.map(p => {
