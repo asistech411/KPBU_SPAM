@@ -5,6 +5,8 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ClipboardList, Home } from '@/lib/icons'
+import toast from 'react-hot-toast'
+import Pagination from '@/components/ui/Pagination'
 
 interface SurveyItem {
     id: string
@@ -21,6 +23,31 @@ export default function AdminDashboard() {
     const router = useRouter()
     const [surveys, setSurveys] = useState<SurveyItem[]>([])
     const [loading, setLoading] = useState(true)
+    const [currentPage, setCurrentPage] = useState(1)
+    const ITEMS_PER_PAGE = 10
+
+    const handleDelete = async (id: string, name: string | null) => {
+        if (!confirm(`Apakah Anda yakin ingin menghapus data untuk: ${name || '(Anonim)'}?`)) return
+        
+        const deletePromise = fetch(`/api/admin/responses/${id}`, { method: 'DELETE' }).then(res => {
+            if (!res.ok) throw new Error('Gagal menghapus')
+            setSurveys(prev => {
+                const newData = prev.filter(s => s.id !== id)
+                const newTotalPages = Math.ceil(newData.length / ITEMS_PER_PAGE)
+                if (currentPage > newTotalPages && newTotalPages > 0) {
+                    setCurrentPage(newTotalPages)
+                }
+                return newData
+            })
+            return res
+        })
+
+        toast.promise(deletePromise, {
+            loading: 'Menghapus data...',
+            success: 'Berhasil menghapus respons.',
+            error: 'Terjadi kesalahan saat menghapus.',
+        })
+    }
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -59,6 +86,9 @@ export default function AdminDashboard() {
 
     const submittedCount = surveys.filter(s => s.isSubmitted).length
     const inProgressCount = surveys.filter(s => !s.isSubmitted).length
+
+    const currentSurveys = surveys.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    const totalPages = Math.ceil(surveys.length / ITEMS_PER_PAGE)
 
     return (
         <>
@@ -108,9 +138,10 @@ export default function AdminDashboard() {
                     ) : surveys.length === 0 ? (
                         <div className="alert alert-info">Belum ada response survey.</div>
                     ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="allocation-matrix">
-                                <thead>
+                        <>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="allocation-matrix">
+                                    <thead>
                                     <tr>
                                         <th>Nama</th>
                                         <th>Email</th>
@@ -121,7 +152,7 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {surveys.map(s => (
+                                    {currentSurveys.map(s => (
                                         <tr key={s.id}>
                                             <td style={{ fontWeight: 600 }}>{s.respondentName || '(Anonim)'}</td>
                                             <td>{s.respondentEmail || '-'}</td>
@@ -133,20 +164,31 @@ export default function AdminDashboard() {
                                             </td>
                                             <td>{new Date(s.createdAt).toLocaleDateString('id-ID')}</td>
                                             <td>
-                                                {s.isSubmitted ? (
-                                                    <Link href={`/results/${s.id}`} className="btn btn-sm btn-primary">
-                                                        Lihat Hasil
-                                                    </Link>
-                                                ) : (
-                                                    <span style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>-</span>
-                                                )}
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    {s.isSubmitted ? (
+                                                        <Link href={`/results/${s.id}`} className="btn btn-sm btn-primary">
+                                                            Lihat
+                                                        </Link>
+                                                    ) : (
+                                                        <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--text-light)', fontSize: '0.85rem', width: '48px', justifyContent: 'center' }}>-</span>
+                                                    )}
+                                                    <button onClick={() => handleDelete(s.id, s.respondentName)} className="btn btn-sm btn-danger" title="Hapus">
+                                                        Hapus
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                        <Pagination 
+                            currentPage={currentPage} 
+                            totalPages={totalPages} 
+                            onPageChange={setCurrentPage} 
+                        />
+                    </>
+                )}
                 </div>
 
                 <div className="btn-group">

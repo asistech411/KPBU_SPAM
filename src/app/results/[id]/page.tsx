@@ -273,11 +273,22 @@ export default function ResultsPage() {
                         topRiskCode={topRisk.code}
                     />
 
-                    <FAHPDetailTable fahp={r.fahp} />
-
-                    <FAHPBarChart fahp={r.fahp} />
-
-                    <LCMHeatmap lcmMap={lcmMap} />
+                    {isAdmin ? (
+                        <>
+                            <FAHPDetailTable fahp={r.fahp} />
+                            <FAHPBarChart fahp={r.fahp} />
+                            <LCMHeatmap lcmMap={lcmMap} />
+                        </>
+                    ) : (
+                        <details style={{ margin: '1.5rem 0', padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+                            <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--primary)' }}>Lihat Detail Matriks Analisis (Advanced)</summary>
+                            <div style={{ marginTop: '1rem' }}>
+                                <FAHPDetailTable fahp={r.fahp} />
+                                <FAHPBarChart fahp={r.fahp} />
+                                <LCMHeatmap lcmMap={lcmMap} />
+                            </div>
+                        </details>
+                    )}
 
                     <AllocationMatrix
                         fahpWeights={r.fahp.weights}
@@ -299,12 +310,16 @@ export default function ResultsPage() {
                     />
 
                     {/* BL-07: AUDIT_Checks — 13 Integrity Tests */}
-                    <div className="section-divider" />
-                    <AuditChecksTable checks={auditChecks} passCount={auditPassCount} />
-
-                    {/* BL-09: AUDIT_Trace — KPI Lineage Map */}
-                    <div className="section-divider" />
-                    <AuditTraceTable />
+                    {isAdmin && (
+                        <>
+                            <div className="section-divider" />
+                            <AuditChecksTable checks={auditChecks} passCount={auditPassCount} />
+                            
+                            {/* BL-09: AUDIT_Trace — KPI Lineage Map */}
+                            <div className="section-divider" />
+                            <AuditTraceTable />
+                        </>
+                    )}
 
                     {/* Export Buttons */}
                     <ExportButtons

@@ -40,6 +40,9 @@ export default function StepPAT({ tier, items, patData, activeTab, onTabChange, 
         <div className="card">
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{tier === 1 ? <ClipboardList size={20} /> : <Wrench size={20} />} {t.patTitle(tier)}</h2>
             <p className="card-subtitle">{t.patSubtitle(tier)}</p>
+            <div className="alert alert-warning" style={{ fontSize: '0.9rem' }}>
+                <strong>⚠️ Self-Assessment:</strong> Harap isi pertanyaan di bawah ini secara objektif berdasarkan kondisi <strong>nyata/riil</strong> kapasitas instansi Anda saat ini (bukan kondisi ideal atau harapan) untuk menjaga konsistensi dan menghindari bias.
+            </div>
             <div className="alert alert-info">
                 <span className={`tier-badge ${tierBadge}`}>Tier-{tier}</span> <strong>{itemCount} {t.patItemPerRisk}</strong> — {t.patScaleHint(tier)}
             </div>

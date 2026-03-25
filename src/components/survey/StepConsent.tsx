@@ -20,12 +20,12 @@ export default function StepConsent({ consent, onConsentChange, onNext, onPrev }
     return (
         <div className="card">
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ClipboardList size={20} /> {t.consentTitle}
+                <ClipboardList size={20} /> Lembar Informasi & Persetujuan
             </h2>
-            <p className="card-subtitle">{t.consentSubtitle}</p>
-            <div className="alert alert-info"><strong>{t.consentPurpose}:</strong> {t.consentPurposeText}</div>
-            <div className="alert alert-success"><strong>{t.consentConfidential}:</strong> {t.consentConfidentialText}</div>
-            <div className="alert alert-warning"><strong>{t.consentVoluntary}:</strong> {t.consentVoluntaryText}</div>
+            <p className="card-subtitle">Terima kasih atas partisipasi Anda dalam penilaian ini.</p>
+            <div className="alert alert-info"><strong>Tujuan:</strong> Penilaian ini bertujuan untuk memetakan alokasi risiko yang tepat pada proyek KPBU SPAM secara ringkas.</div>
+            <div className="alert alert-success"><strong>Kerahasiaan:</strong> Identitas dan jawaban Anda akan dijaga kerahasiaannya dan hanya digunakan untuk keperluan analisis.</div>
+            <div className="alert alert-warning"><strong>Sukarela:</strong> Partisipasi Anda bersifat sukarela tanpa ada paksaan.</div>
             <div className="form-group" style={{ marginTop: '2rem' }}>
                 <label className={`checkbox-label ${consent ? 'selected' : ''}`}>
                     <input

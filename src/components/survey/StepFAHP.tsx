@@ -56,12 +56,12 @@ export default function StepFAHP({ fahpPairwise, fahpPairs, fahpCount, isFahpVal
                             <div key={k} className="fahp-pair">
                                 <div className="fahp-risk left">{p.r1.code}<br /><small>{p.r1.name}</small></div>
                                 <select className="form-select fahp-select" value={fahpPairwise[k] || ''} onChange={e => onUpdateFahp(k, e.target.value)}>
-                                    <option value="">{t.selectPlaceholder}</option>
+                                    <option value="">-- {t.selectPlaceholder} --</option>
                                     {FAHP_SCALE.map(item => {
                                         const label = lang === 'en' ? item.labelEN : item.labelID;
                                         return (
                                             <option key={item.code} value={item.crisp}>
-                                                {item.code.startsWith('1/') ? p.r2.code : p.r1.code} {label.replace(/ Penting| Important/gi, '')} ({item.code})
+                                                {item.code.startsWith('1/') ? p.r2.code : p.r1.code} {label} ({item.code})
                                             </option>
                                         )
                                     })}
